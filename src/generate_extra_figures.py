@@ -42,5 +42,33 @@ def main():
     for ax in axes: ax.set_xlabel("Tasa"); ax.set_ylabel("Puntuación"); ax.legend(fontsize=8)
     save_figure(fig, FIGURES / "09_curvas_roc_pr_multiclase.png"); plt.close(fig)
 
+    auc_rows = []
+    for i, cls in enumerate(model.classes_):
+        binary = (y == cls).astype(int)
+        fpr, tpr, _ = roc_curve(binary, proba[:, i])
+        precision, recall, _ = precision_recall_curve(binary, proba[:, i])
+        auc_rows.append({
+            "class": cls,
+            "roc_auc": auc(fpr, tpr),
+            "pr_auc": auc(recall, precision),
+        })
+    auc_frame = pd.DataFrame(auc_rows)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    x = np.arange(len(auc_frame))
+    width = 0.36
+    ax.bar(x - width / 2, auc_frame["roc_auc"], width, label="ROC-AUC",
+           color=[CLASS_COLORS.get(c, COLORS["seugray"]) for c in auc_frame["class"]])
+    ax.bar(x + width / 2, auc_frame["pr_auc"], width, label="PR-AUC",
+           color=COLORS["seugray"], alpha=.8)
+    ax.set_xticks(x, auc_frame["class"], rotation=20)
+    ax.set_ylim(0, 1)
+    ax.set_ylabel("Área bajo la curva")
+    ax.set_title("AUC por clase: ROC y Precision-Recall")
+    ax.legend()
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    save_figure(fig, FIGURES / "10_auc_area_multiclase.png"); plt.close(fig)
+    auc_frame.to_csv(RESULTS / "auc_por_clase.csv", index=False)
+
 if __name__ == "__main__":
     main()

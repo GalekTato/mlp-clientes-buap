@@ -1,88 +1,133 @@
-# Documentación técnica del sistema de clasificación multiclase
+# Documentación técnica integral del proyecto
 
-## 1. Propósito
+## 1. Descripción general
 
-El proyecto construye un sistema reproducible de clasificación multiclase para segmentar clientes de comercio electrónico en cinco perfiles: `Inactivo`, `Alto_valor`, `Promocional`, `Frecuente` y `Ocasional`. La implementación usa Python, pandas, NumPy, SciPy, scikit-learn, imbalanced-learn, matplotlib, seaborn y joblib.
+El proyecto implementa un sistema de clasificación multiclase para segmentar
+clientes de comercio electrónico en cinco perfiles:
 
-El archivo disponible en `datos/` contiene 31 columnas: un identificador, 29 variables predictivas y `clase_cliente`. La unidad de análisis es un cliente y los atributos históricos resumen el comportamiento de los 365 días previos al corte.
+- `Inactivo`
+- `Alto_valor`
+- `Promocional`
+- `Frecuente`
+- `Ocasional`
 
-## 2. Comprensión del dataset
+El objetivo es estimar el comportamiento del cliente durante los siguientes
+90 días a partir de variables históricas de los 365 días anteriores. La
+solución integra auditoría de calidad, limpieza determinista, muestreo
+estadístico, validación cruzada, ingeniería de variables, balanceo,
+optimización de un `MLPClassifier`, calibración probabilística y evaluación
+por lotes.
 
-### Variables y reglas
+No se trata de componentes aislados: todos forman un único flujo reproducible.
+La semilla principal es `42`, las transformaciones se ajustan dentro del
+pipeline y las particiones se generan de forma estratificada.
 
-- `id_cliente`: identificador; se excluye del modelo.
-- Variables demográficas y de preferencia: `edad`, `region`, `zona`, `canal_preferido`, `dispositivo_preferido`, `categoria_preferida` y `metodo_pago_preferido`.
-- Variables transaccionales: compras, días desde la última compra, ticket, gasto, unidades, categorías, sesiones y carritos.
-- Variables de comunicación y fidelidad: correos, clics, puntos, membresía, devoluciones, reclamos, entrega y satisfacción.
-- `clase_cliente`: objetivo multiclase.
+## 2. Datos y significado de las variables
 
-Las relaciones de dominio más importantes son:
+El archivo completo contiene 1,000,000 de registros y 31 columnas:
 
-1. Si `compras_365d == 0`, el ticket, gasto, unidades, categorías, descuentos y devoluciones deben ser cero y `dias_ultima_compra` debe ser 366.
-2. `gasto_total_365d_mxn` debe ser `round(compras_365d * ticket_promedio_mxn, 2)`.
-3. Devoluciones y compras con descuento no pueden superar compras.
+- `id_cliente`: identificador único, excluido del modelo.
+- 29 variables predictivas numéricas y categóricas.
+- `clase_cliente`: variable objetivo.
+
+Las variables describen edad, región, zona, antigüedad, canal, dispositivo,
+categoría preferida, compras, recencia, ticket, gasto, unidades, sesiones,
+carritos, descuentos, correos, clics, puntos, devoluciones, reclamos, entrega,
+satisfacción y método de pago.
+
+### Reglas de negocio verificadas
+
+1. Si `compras_365d == 0`, ticket, gasto, unidades, categorías, descuentos y
+   devoluciones deben ser cero, y `dias_ultima_compra` debe valer 366.
+2. `gasto_total_365d_mxn` debe ser
+   `round(compras_365d * ticket_promedio_mxn, 2)`.
+3. Devoluciones y compras con descuento no superan el número de compras.
 4. Categorías compradas no supera `min(6, compras_365d)`.
-5. Sesiones deben ser al menos las compras.
-6. Carritos abandonados no puede superar `sesiones - compras`.
-7. Correos abiertos no puede superar correos enviados.
+5. Las sesiones son mayores o iguales a las compras.
+6. Los carritos abandonados no superan `sesiones - compras`.
+7. Los correos abiertos no superan los correos enviados.
 
-## 3. Flujo de ejecución
+## 3. Auditoría y limpieza
 
-```text
-CSV -> auditoría y limpieza -> muestra estratificada -> train/validation/test
-    -> variables de dominio -> ColumnTransformer -> MLPClassifier
-    -> búsqueda de hiperparámetros -> balanceo/calibración -> evaluación
-    -> tablas, gráficas, modelo serializado y reporte PDF
-```
+`preprocesameinto.py` —nombre requerido por la rúbrica— y
+`preprocesamiento.py` —alias legible— realizan la auditoría completa.
 
-### `preprocesameinto.py` y `preprocesamiento.py`
+Se revisan:
 
-El primer archivo conserva el nombre solicitado por la rúbrica. El segundo es un alias limpio. Ambos:
+- valores nulos;
+- filas duplicadas e identificadores repetidos;
+- tipos numéricos y categóricos;
+- categorías fuera de dominio;
+- límites de cada variable;
+- relaciones lógicas entre columnas;
+- outliers mediante rango intercuartílico;
+- colinealidad entre compras, ticket y gasto.
 
-- leen desde la raíz o desde `datos/`;
-- convierten columnas numéricas y categóricas;
-- auditan nulos, duplicados, dominios, rangos y relaciones;
-- corrigen variables derivadas cuando la regla es inequívoca;
-- eliminan filas que no pueden repararse de forma técnicamente defendible;
-- escriben `datos/dataset_limpio.csv` y reportes en `resultados/`.
+La política de corrección es conservadora. Solo se corrigen valores derivados
+cuyo valor correcto se puede reconstruir inequívocamente, como el gasto total.
+Las filas con nulos críticos, categorías inválidas, rangos imposibles o
+violaciones relacionales no reparables se eliminan y se contabilizan.
 
-Resultado observado:
+### Resultado de la auditoría completa
 
-| Elemento | Conteo |
+| Elemento | Resultado |
 |---|---:|
-| Filas auditadas | 1,000,000 |
-| Correcciones deterministas de gasto | 4,978 |
-| Filas descartadas | 20,466 |
-| Filas limpias | 881,034 |
+| Registros auditados | 1,000,000 |
+| Correcciones de gasto derivado | 28,966 |
+| Registros descartados | 118,966 |
+| Registros limpios | 881,034 |
+| Correlación compras-gasto | 0.7558 |
+| Correlación ticket-gasto | 0.7321 |
 
-Los valores extremos se reportan mediante el criterio IQR, pero no se eliminan automáticamente si cumplen el dominio. Esto evita eliminar clientes legítimos de alto valor.
+Los outliers válidos no se eliminan automáticamente. Esta decisión evita
+descartar clientes legítimos de alto valor.
 
-### `muestreo.py`
+## 4. Muestreo y particiones
 
-Calcula el tamaño de muestra con Cochran corregido por población finita:
+Se utiliza la fórmula de Cochran con corrección por población finita:
 
 ```text
 n0 = Z² p (1-p) / e²
 n  = n0 / (1 + (n0-1)/N)
 ```
 
-Se usan `Z=2.576`, `p=0.5` y `e=0.005`. La muestra se distribuye proporcionalmente por `clase_cliente` y se divide en 70% entrenamiento, 15% validación y 15% prueba con `random_state=42`.
+Parámetros:
 
-Archivos producidos:
+- `Z = 2.576`, confianza aproximada del 99 %;
+- `p = 0.5`, máxima variabilidad;
+- `e = 0.005`, error máximo permitido;
+- `N = 881,034`, población limpia.
 
-- `datos/train.csv`
-- `datos/validation.csv`
-- `datos/test.csv`
-- `resultados/calculo_muestra.json`
-- `resultados/distribucion_particiones.csv`
+El tamaño calculado es 61,710 y la afijación proporcional redondeada produce
+61,712 observaciones:
 
-### `crossVal.py`
+| Partición | Registros |
+|---|---:|
+| Train | 43,198 |
+| Validation | 9,257 |
+| Test | 9,257 |
 
-Expone `get_stratified_cv(k)` y compara `k=3`, `k=5` y `k=10` con `StratifiedKFold` sobre el pipeline MLP real. Los resultados fueron F1 macro medio de 0.2713, 0.2635 y 0.2696, respectivamente. Se elige `k=5` por el equilibrio entre estabilidad estadística, 433 casos de `Alto_valor` por fold y costo computacional.
+La clase `Alto_valor` conserva 4,178 casos en la muestra total y 585 casos por
+fold cuando se utiliza `k=5`.
 
-### `src/feature_engineering.py`
+## 5. Validación cruzada
 
-Implementa `DomainFeatureTransformer`, compatible con scikit-learn. Las variables son:
+`crossVal.py` usa `StratifiedKFold` y evalúa el pipeline MLP real con `k=3`,
+`k=5` y `k=10`.
+
+| k | Alto_valor mínimo por fold | F1 macro medio | Desv. estándar | Tiempo |
+|---:|---:|---:|---:|---:|
+| 3 | 975 | 0.2802 | 0.0054 | 15.73 s |
+| 5 | 585 | 0.2769 | 0.0096 | 9.17 s |
+| 10 | 292 | 0.2753 | 0.0104 | 19.56 s |
+
+Se selecciona `k=5` como compromiso entre representación minoritaria, costo y
+estabilidad. El valor no se elige solo por la media de una corrida: también se
+consideran la cantidad de ejemplos por fold y la variabilidad.
+
+## 6. Ingeniería de variables
+
+`DomainFeatureTransformer` crea ocho variables dentro del pipeline:
 
 ```python
 ratio_descuento = compras_con_descuento_365d / max(compras_365d, 1)
@@ -95,97 +140,146 @@ tasa_devoluciones = devoluciones_365d / max(compras_365d, 1)
 indice_valor_cliente = gasto_total_365d_mxn / (dias_ultima_compra + 1.0)
 ```
 
-El transformer se ejecuta dentro del pipeline, antes del `ColumnTransformer`, por lo que cada fold calcula sus transformaciones sin usar información de validación.
+Estas variables representan recurrencia, intensidad, dependencia promocional,
+interacción digital, devoluciones y valor monetario. Sus denominadores están
+protegidos para evitar divisiones por cero.
 
-### `entrenamiento.py`
+La importancia por permutación en validación identificó como variables más
+influyentes `descuento_promedio_pct` (0.0347), `sesiones_365d` (0.0205),
+`frecuencia_anualizada` (0.0092), `unidades_por_compra` (0.0077) y
+`tasa_abandono_carrito` (0.0071).
 
-El pipeline está compuesto por:
+## 7. Arquitectura del modelo
+
+El pipeline ejecuta:
 
 1. `DomainFeatureTransformer`.
 2. `ColumnTransformer`.
-3. `StandardScaler` para variables numéricas.
-4. `OneHotEncoder(handle_unknown="ignore")` para categóricas.
+3. `StandardScaler` para las variables numéricas.
+4. `OneHotEncoder(handle_unknown="ignore")` para las categóricas.
 5. `MLPClassifier`.
 
-La rejilla considera arquitectura, activación, `alpha`, `batch_size`, `max_iter`, tasa de aprendizaje, solver, momentum y early stopping. La métrica principal es `f1_macro`; también se registran `f1_weighted`, `balanced_accuracy`, precisión, recall y `roc_auc_ovr`.
+La búsqueda considera:
 
-La búsqueda usa `GridSearchCV`, caché `joblib.Memory`, backend `loky` y `threadpool_limits` para evitar sobresuscripción de hilos. El modelo entrenado se guarda en `modelos/`.
+- número de neuronas y capas ocultas;
+- `max_iter`;
+- activación `relu` o `tanh`;
+- `alpha` como regularización L2;
+- `batch_size`;
+- `learning_rate_init`;
+- learning rate constante o adaptativa;
+- solvers Adam y SGD;
+- momentum y Nesterov;
+- `early_stopping`;
+- `validation_fraction`;
+- `n_iter_no_change`;
+- `tol`.
 
-### Balanceo
+`GridSearchCV` selecciona con `F1-Macro`. La ejecución usa caché de
+transformaciones, paralelismo `loky` y limitación de hilos BLAS/OpenMP.
 
-`src/balancing.py` contiene:
+## 8. Balanceo dentro de los folds
 
-- baseline con distribución original;
-- pesos balanceados controlados por `gamma`;
-- `RandomOverSampler` y `SMOTE` cuando `imbalanced-learn` está instalado;
-- fallback de sobremuestreo estratificado.
+La comparación se realiza sin contaminar validación:
 
-La comparación localizada por fold obtuvo:
+- **Distribución original:** no modifica el fold de entrenamiento.
+- **Ponderación:** calcula pesos con `compute_class_weight` usando solo el
+  fold de entrenamiento y aplica `gamma=0.75`.
+- **Sobremuestreo:** usa `RandomOverSampler` exclusivamente sobre el fold de
+  entrenamiento.
 
-| Esquema | F1 macro medio | Balanced accuracy media | Recall Frecuente | Recall Promocional |
+Resultados medios en cinco folds:
+
+| Esquema | F1 macro | Balanced accuracy | Recall Frecuente | Recall Promocional |
 |---|---:|---:|---:|---:|
-| Baseline | 0.2635 | 0.2651 | 0.0311 | 0.0901 |
-| Ponderado, gamma=0.75 | 0.3171 | 0.3564 | 0.2189 | 0.3975 |
-| Sobremuestreo aleatorio | 0.2555 | 0.3279 | 0.3113 | 0.4097 |
+| Distribución original | 0.2769 | 0.2744 | 0.0359 | 0.1176 |
+| Ponderación | 0.3122 | 0.3480 | 0.2257 | 0.3989 |
+| Sobremuestreo | 0.2614 | 0.3267 | 0.3132 | 0.4034 |
 
-En la evaluación final de prueba, el esquema ponderado obtuvo F1 macro 0.3276, balanced accuracy 0.3574 y F1 weighted 0.3751.
+La ponderación ofrece el mejor compromiso de F1 macro y balanced accuracy.
+El sobremuestreo captura más casos de `Frecuente` y `Promocional`, pero
+reduce el F1 macro global.
 
-La ponderación ofrece el mejor compromiso global; el sobremuestreo aumenta el recall de las clases objetivo, pero reduce F1 global. Los tres esquemas se ajustan únicamente con el subconjunto de entrenamiento de cada fold.
+## 9. Resultados del modelo seleccionado
 
-### Calibración y umbrales
+| Partición | F1 macro | Balanced accuracy | F1 weighted | ROC-AUC OvR |
+|---|---:|---:|---:|---:|
+| Train | 0.3429 | 0.3760 | 0.3821 | 0.6997 |
+| Validation | 0.3185 | 0.3499 | 0.3600 | 0.6856 |
+| Test | 0.3276 | 0.3574 | 0.3751 | 0.6895 |
 
-`src/calibration.py` compara:
+La brecha train-test de F1 macro es 0.0153. Esta diferencia es reducida y no
+indica sobreajuste severo bajo este protocolo.
 
-- calibración `sigmoid` mediante Platt scaling;
-- calibración `isotonic`;
-- Log-Loss;
-- Brier multiclase;
-- Expected Calibration Error;
-- multiplicadores por clase ajustados únicamente con validación.
+## 10. Calibración y umbrales
 
-La calibración isotónica alcanzó un `F1 macro` ajustado de 0.2751 en validación. Los multiplicadores aprendidos fueron `[1.5, 1.5, 1.1, 0.7, 1.5]` en el orden de clases del estimador.
+Se comparan calibración `sigmoid` e `isotonic`. La isotónica obtuvo:
 
-### Evaluación por chunks
+- F1 macro ajustado en validación: **0.2751**;
+- log-loss: **1.3133**;
+- Brier multiclase: **0.6853**;
+- ECE: **0.0043**.
 
-`src/evaluation_large.py` permite inferir archivos grandes en bloques. Convierte importes con símbolos monetarios, descarta filas no convertibles de forma explícita y calcula throughput, accuracy, F1, balanced accuracy, ROC-AUC, log-loss y matriz de confusión.
+Los multiplicadores de probabilidad se ajustan únicamente con validación:
+`[1.5, 1.5, 1.1, 0.7, 1.5]`.
 
-Sobre el archivo completo se procesaron 970,000 filas válidas, se omitieron 30,000 con campos no convertibles y se midieron aproximadamente 19,309 registros por segundo. El F1 macro fue 0.3219, la balanced accuracy 0.3523 y el log-loss 1.4139.
+## 11. Evaluación del archivo completo
 
-## 4. Gráficas
+La inferencia se ejecuta por chunks para no cargar simultáneamente todas las
+filas en memoria. Se procesaron:
 
-`src/plotting_theme.py` centraliza la paleta:
+- 970,000 filas válidas;
+- 30,000 filas omitidas por campos no convertibles;
+- throughput aproximado: 19,309 registros por segundo;
+- F1 macro: 0.3219;
+- balanced accuracy: 0.3523;
+- log-loss: 1.4139.
 
-| Nombre | Hexadecimal | Uso |
+La evaluación por lotes es una medida de comportamiento global sobre el archivo
+completo, mientras que las métricas de test se calculan sobre una partición
+estratificada independiente.
+
+## 12. Gráficas y significado
+
+Las figuras se generan con una paleta común entre Python y LaTeX:
+
+| Color | Hexadecimal | Clase o función |
 |---|---|---|
-| `seupurple` | `#8E44AD` | títulos y Alto_valor |
-| `lachaiseblue` | `#2980B9` | subtítulos y Frecuente |
-| `seublue` | `#3498DB` | acentos y Ocasional |
-| `seuteal` | `#16A085` | métricas y Promocional |
-| `seuamber` | `#D35400` | alertas e Inactivo |
-| `seugray` | `#7F8C8D` | texto secundario |
-| `seubg` | `#F0F8FF` | fondos |
+| `seupurple` | `#8E44AD` | `Alto_valor`, títulos |
+| `lachaiseblue` | `#2980B9` | `Frecuente` |
+| `seublue` | `#3498DB` | `Ocasional` |
+| `seuteal` | `#16A085` | `Promocional` |
+| `seuamber` | `#D35400` | `Inactivo` |
 
-Las nueve familias se encuentran en `graficas/` en PNG y PDF a 300 DPI.
+Figuras principales:
 
-## 5. Ejecución
+- `01_distribucion_clases_cochran`: conserva la proporción de clases.
+- `02_analisis_k_crossval`: muestra representación minoritaria, F1 y costo.
+- `03_evolucion_rejilla_paralela`: compara configuraciones.
+- `04_curvas_aprendizaje_convergencia`: permite observar convergencia.
+- `05_impacto_balanceo_frecuente_promocional`: muestra el efecto del balanceo.
+- `06_curvas_calibracion_probabilidades`: compara calidad probabilística.
+- `07_variacion_estadistica_boxplots`: muestra estabilidad entre folds.
+- `08_matrices_confusion_test_y_archivo`: muestra errores por clase.
+- `09_curvas_roc_pr_multiclase`: contiene curvas ROC y Precision-Recall.
+- `10_auc_area_multiclase`: representa el área bajo las curvas ROC y PR por
+  clase. Esta es la gráfica de AUC/área bajo la curva incorporada al reporte.
+
+## 13. Reproducibilidad
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python preprocesameinto.py
 python muestreo.py
-python crossVal.py
-python entrenamiento.py --balance weighted --calibrate
-python main.py --fast --balance weighted --calibrate
+python crossVal.py --n-jobs 2
+python entrenamiento.py --balance weighted --calibrate --n-jobs 2
+python main.py --skip-clean --balance weighted --calibrate --large-validation
+python -m src.generate_v2_figures
+python -m src.generate_extra_figures
 python empaquetar_entrega.py
 ```
 
-Para usar rutas alternativas:
-
-```powershell
-python entrenamiento.py --train datos\train.csv --validation datos\validation.csv --test datos\test.csv --report-dir resultados --graph-dir graficas
-```
-
-## 6. Interpretación final
-
-El modelo no debe evaluarse solo con accuracy. El objetivo es capturar de manera equilibrada los cinco perfiles. La ponderación mejora la sensibilidad global a clases con menos observaciones; la calibración permite interpretar mejor las probabilidades; y la ingeniería de variables hace explícitas las relaciones comerciales que el MLP tendría que aprender indirectamente.
+La ejecución rápida usa `--fast`; los resultados finales deben distinguirse de
+una comprobación rápida y conservar los archivos de configuración y métricas
+generados.

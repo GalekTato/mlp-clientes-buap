@@ -123,7 +123,7 @@ Se exploran arquitecturas $(64)$, $(128,64)$ y $(128,64,32)$, épocas, activaci�
 \subsection{Pregunta 5: métricas}
 Se optimiza $F1$ macro para dar el mismo peso a cada clase, y se registran balanced accuracy, $F1$ ponderado, precisión/recall macro, ROC--AUC OvR, log-loss, Brier multiclase y ECE. Esta combinación distingue la captura de minorías de la calidad probabilística.
 
-\section{Análisis empírico y mejoras avanzadas}
+\section{Análisis empírico del sistema}
 \subsection{Ingeniería de variables}
 \begin{table}[H]\centering\caption{Características derivadas de dominio.}\small
 \begin{tabularx}{\textwidth}{lX}\toprule
@@ -137,15 +137,14 @@ Variable&Definición\\\midrule
 \code{tasa\_devoluciones}&devoluciones / $\max(compras,1)$\\
 \code{indice\_valor\_cliente}&gasto / (días desde compra + 1)\\\bottomrule
 \end{tabularx}\end{table}
-Estas variables operacionalizan exactamente la frontera $D/N=0.60$ que separa perfiles promocionales de frecuentes, sin filtrar información desde validación. La importancia por permutación se deja parametrizada para la corrida completa.
-En la ejecución local, las variables con mayor caída de $F1$ macro al permutarse fueron \code{descuento\_promedio\_pct} (0.0347), \code{sesiones\_365d} (0.0205), \code{frecuencia\_anualizada} (0.0092), \code{unidades\_por\_compra} (0.0077) y \code{tasa\_abandono\_carrito} (0.0071). Esto respalda que la intensidad de interacción y la recurrencia aportan señal adicional, aunque no sustituye una validación causal.
+Estas variables operacionalizan exactamente la frontera $D/N=0.60$ que separa perfiles promocionales de frecuentes, sin filtrar información desde validación. La importancia por permutación se calculó sobre validación. Las variables con mayor caída de $F1$ macro al permutarse fueron \code{descuento\_promedio\_pct} (0.0347), \code{sesiones\_365d} (0.0205), \code{frecuencia\_anualizada} (0.0092), \code{unidades\_por\_compra} (0.0077) y \code{tasa\_abandono\_carrito} (0.0071). Esto respalda que la intensidad de interacción y la recurrencia aportan señal adicional, aunque no sustituye una validación causal.
 
 \subsection{Balanceo dentro de cada fold}
 \begin{table}[H]\centering\caption{Comparación de balanceo dentro de cada fold (medias de cinco folds).}\begin{tabular}{lrrrr}\toprule
 Esquema&F1 macro&Bal. Acc.&Recall Frecuente&Recall Promocional\\\midrule
-Baseline&0.2635&0.2651&0.0311&0.0901\\
-Pesos $\gamma=0.75$&0.3171&0.3564&0.2189&0.3975\\
-Sobremuestreo aleatorio&0.2555&0.3279&0.3113&0.4097\\\bottomrule\end{tabular}\end{table}
+Baseline&0.2769&0.2744&0.0359&0.1176\\
+Pesos $\gamma=0.75$&0.3122&0.3480&0.2257&0.3989\\
+Sobremuestreo aleatorio&0.2614&0.3267&0.3132&0.4034\\\bottomrule\end{tabular}\end{table}
 \fig{05_impacto_balanceo_frecuente_promocional.png}{.86}
 La ponderación ofrece el mejor compromiso de $F1$ macro y balanced accuracy en esta ejecución, mientras que el sobremuestreo incrementa el recall de \textit{Frecuente} y \textit{Promocional} a costa de precisión y F1 global. Los tres esquemas se ejecutaron únicamente sobre el subconjunto de entrenamiento de cada fold.
 
@@ -162,8 +161,10 @@ Partición&F1 macro&Bal. Acc.&F1 weighted&ROC--AUC\\\midrule
 Train&0.3429&0.3760&0.3821&0.6997\\
 Validation&0.3185&0.3499&0.3600&0.6856\\
 Test&0.3276&0.3574&0.3751&0.6895\\\bottomrule\end{tabular}\end{table}
-La variación del modelo seleccionado en cinco folds fue $F1_m=0.3171\pm0.0059$, $SE=0.0026$. La brecha de generalización del entrenamiento a prueba fue 0.0250 en $F1$ macro; por tanto, no se observa evidencia de sobreajuste severo.
+La variación del modelo seleccionado en cinco folds fue $F1_m=0.3122\pm0.0056$, con $SE=0.0025$ bajo el esquema ponderado. La brecha de generalización entre entrenamiento y prueba fue 0.0153 en $F1$ macro; por tanto, no se observa evidencia de sobreajuste severo.
 \fig{03_evolucion_rejilla_paralela.png}{.82}\fig{04_curvas_aprendizaje_convergencia.png}{.72}\fig{07_variacion_estadistica_boxplots.png}{.72}
+\fig{09_curvas_roc_pr_multiclase.png}{.86}
+\fig{10_auc_area_multiclase.png}{.82}
 
 \subsection{Validación masiva}
 El módulo \code{evaluation\_large.py} procesa chunks y mide throughput. En esta ejecución se recorrieron 970,000 filas válidas del archivo completo y se omitieron 30,000 filas con campos no convertibles. El throughput observado fue aproximadamente 19,309 registros/s, con $F1$ macro 0.3219, balanced accuracy 0.3523 y log-loss 1.4139. El procesamiento por chunks permite evaluar el archivo completo sin cargar todas las filas simultáneamente durante la inferencia.
@@ -179,7 +180,7 @@ Explorar la búsqueda exhaustiva; calibrar por clase con más datos; comparar SM
 \end{tcolorbox}
 
 \section{Conclusiones}
-El sistema integra variables derivadas alineadas con la lógica comercial, ponderación para elevar la captura de clases minoritarias, calibración probabilística e infraestructura paralela para escalar la búsqueda. Los resultados muestran una mejora relativa de 19.3\% en $F1$ macro de prueba al pasar del esquema base a pesos controlados. La combinación de validación estratificada, métricas sensibles al desbalance y control de fuga de información ofrece una base reproducible para decisiones comerciales.
+El sistema integra variables derivadas alineadas con la lógica comercial, ponderación para elevar la captura de clases minoritarias, calibración probabilística e infraestructura paralela para escalar la búsqueda. En la prueba estratificada, el modelo seleccionado alcanzó $F1$ macro de 0.3276, balanced accuracy de 0.3574 y ROC--AUC OvR de 0.6895. La evaluación por lotes del archivo completo obtuvo $F1$ macro de 0.3219 y balanced accuracy de 0.3523. La combinación de validación estratificada, métricas sensibles al desbalance y control de fuga de información ofrece una base reproducible para decisiones comerciales.
 
 \section{Bibliografía}
 \begin{thebibliography}{9}
