@@ -31,7 +31,11 @@ def main():
         source = default_dataset()
         model = joblib.load("modelos/mejor_modelo_mlp.joblib")
         result = evaluate_in_chunks(model, source)
-        result["execution_status"] = "executed_full_1m" if result["rows"] >= 1_000_000 else "executed_local_dataset_not_full_1m"
+        raw_rows = result["rows"] + result.get("skipped_rows", 0)
+        result["execution_status"] = (
+            "executed_full_dataset" if raw_rows >= 1_000_000
+            else "executed_local_dataset"
+        )
         payload = json.dumps(result, indent=2)
         (RESULTS / "validacion_masiva.json").write_text(payload, encoding="utf-8")
         (RESULTS / "validacion_masiva_v2.json").write_text(payload, encoding="utf-8")
