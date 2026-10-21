@@ -6,6 +6,9 @@ cache_pipeline/
 datos/*.csv
 resultados/cache/
 _staging_*/
+entrega/
+graficas_cv_tiempo.png
+graficas_distribucion_clases.png
 reporte/referencias/
 reporte/v1_respaldo/
 datos/clientes_comercio_1000000.csv
