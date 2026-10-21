@@ -1,7 +1,9 @@
-"""Compila el PDF y crea un ZIP de código y evidencias por pregunta.
+"""Compila el PDF y crea un ZIP de código, evidencias por pregunta y carpeta auxiliares.
 
-El PDF se conserva separado en ``entrega/``. El ZIP contiene los scripts
-directamente en su raíz y excluye reporte, documentación técnica y guion.
+El PDF y el código fuente LaTeX se conservan fuera del ZIP. El ZIP contiene en su
+raíz los scripts solicitados y ``README.md``, las evidencias por pregunta y una
+carpeta separada ``auxiliares/`` con la explicación técnica detallada, el prompt
+de Gamma, el guion del video y la documentación complementaria.
 """
 from __future__ import annotations
 from pathlib import Path
@@ -33,11 +35,19 @@ def clean_latex_artifacts():
             ):
                 path.unlink()
 
+
 def compile_report():
     report = ROOT / "reporte"
     delivery = ROOT / "entrega"
     clean_delivery()
-    command = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-output-directory", str(delivery), "Reporte_1er_Parcial_Mineria_Datos.tex"]
+    command = [
+        "pdflatex",
+        "-interaction=nonstopmode",
+        "-halt-on-error",
+        "-output-directory",
+        str(delivery),
+        "Reporte_1er_Parcial_Mineria_Datos.tex",
+    ]
     subprocess.run(command, cwd=report, check=True, stdout=subprocess.DEVNULL)
     subprocess.run(command, cwd=report, check=True, stdout=subprocess.DEVNULL)
     pdf = delivery / "Reporte_1er_Parcial_Mineria_Datos.pdf"
@@ -45,18 +55,22 @@ def compile_report():
     pdf.unlink()
     clean_latex_artifacts()
 
+
 def package(name: str):
     staging = ROOT / f"_staging_{name}"
-    if staging.exists(): shutil.rmtree(staging)
+    if staging.exists():
+        shutil.rmtree(staging)
     groups = {
-        # El código se copia una sola vez en la raíz del ZIP; aquí solo van
-        # los datos y evidencias asociados con cada pregunta.
+        # El código y README.md se copian una sola vez en la raíz del ZIP; aquí
+        # van los datos y evidencias asociados con cada pregunta.
         "Pregunta_1_Preprocesamiento": [
             "resultados/auditoria_preprocesamiento.json",
             "resultados/auditoria_preprocesamiento.md",
         ],
         "Pregunta_2_Muestreo": [
-            "datos/train.csv", "datos/validation.csv", "datos/test.csv",
+            "datos/train.csv",
+            "datos/validation.csv",
+            "datos/test.csv",
             "resultados/calculo_muestra.json",
             "resultados/distribucion_particiones.csv",
         ],
@@ -74,25 +88,40 @@ def package(name: str):
     for group, files in groups.items():
         for rel in files:
             src = ROOT / rel
-            if not src.exists(): continue
+            if not src.exists():
+                continue
             dst = staging / group / (src.name if src.is_file() else src.name)
-            if src.is_dir(): shutil.copytree(src, dst, ignore=shutil.ignore_patterns("*.pyc"))
+            if src.is_dir():
+                shutil.copytree(src, dst, ignore=shutil.ignore_patterns("*.pyc"))
             else:
-                dst.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, dst)
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
     root_files = [
-        "preprocesameinto.py", "preprocesamiento.py", "muestreo.py",
-        "crossVal.py", "entrenamiento.py", "main.py",
-        "empaquetar_entrega.py", "proyecto_utils.py", "requirements.txt",
+        "README.md",
+        "preprocesameinto.py",
+        "preprocesamiento.py",
+        "muestreo.py",
+        "crossVal.py",
+        "entrenamiento.py",
+        "main.py",
+        "empaquetar_entrega.py",
+        "proyecto_utils.py",
+        "requirements.txt",
     ]
     for rel in root_files:
         shutil.copy2(ROOT / rel, staging / Path(rel).name)
     shutil.copytree(ROOT / "src", staging / "src", ignore=shutil.ignore_patterns("*.pyc"))
+    if (ROOT / "auxiliares").exists():
+        shutil.copytree(ROOT / "auxiliares", staging / "auxiliares")
     zip_path = ROOT / "entrega" / f"{name}.zip"
-    if zip_path.exists(): zip_path.unlink()
+    if zip_path.exists():
+        zip_path.unlink()
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for file in staging.rglob("*"):
-            if file.is_file(): archive.write(file, file.relative_to(staging))
+            if file.is_file():
+                archive.write(file, file.relative_to(staging))
     shutil.rmtree(staging)
+
 
 if __name__ == "__main__":
     compile_report()
