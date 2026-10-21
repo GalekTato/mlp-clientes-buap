@@ -6,7 +6,16 @@ import subprocess
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
+DELIVERY_BASENAME = "1ERPARCIAL_GAELASKARYRAZOMONTAÑEZ_MD"
 LATEX_TEMP_EXTENSIONS = {".aux", ".log", ".out", ".toc", ".synctex.gz"}
+
+
+def clean_delivery():
+    delivery = ROOT / "entrega"
+    delivery.mkdir(exist_ok=True)
+    for path in delivery.iterdir():
+        if path.is_file():
+            path.unlink()
 
 
 def clean_latex_artifacts():
@@ -21,13 +30,13 @@ def clean_latex_artifacts():
 def compile_report():
     report = ROOT / "reporte"
     delivery = ROOT / "entrega"
-    delivery.mkdir(exist_ok=True)
+    clean_delivery()
     command = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-output-directory", str(delivery), "Reporte_1er_Parcial_Mineria_Datos.tex"]
     subprocess.run(command, cwd=report, check=True, stdout=subprocess.DEVNULL)
     subprocess.run(command, cwd=report, check=True, stdout=subprocess.DEVNULL)
     pdf = delivery / "Reporte_1er_Parcial_Mineria_Datos.pdf"
-    shutil.copy2(pdf, delivery / "Tarea1_GaelAskaryRazoMontanez.pdf")
-    shutil.copy2(pdf, delivery / "Examen1_GaelAskaryRazoMontanez.pdf")
+    shutil.copy2(pdf, delivery / f"{DELIVERY_BASENAME}.pdf")
+    pdf.unlink()
     clean_latex_artifacts()
 
 def package(name: str):
@@ -50,7 +59,7 @@ def package(name: str):
             "reporte/Documentacion_Tecnica_Proyecto.md",
             "reporte/Guion_Video_3_Minutos.md",
             "reporte/Prompt_Gamma_AI.md",
-            "entrega/Tarea1_GaelAskaryRazoMontanez.pdf",
+            f"entrega/{DELIVERY_BASENAME}.pdf",
         ],
     }
     for group, files in groups.items():
@@ -73,6 +82,5 @@ def package(name: str):
 
 if __name__ == "__main__":
     compile_report()
-    package("Tarea1_GaelAskaryRazoMontanez")
-    package("Examen1_GaelAskaryRazoMontanez")
-    print("PDF y paquetes creados en entrega/")
+    package(DELIVERY_BASENAME)
+    print(f"Entrega creada en entrega/{DELIVERY_BASENAME}.pdf y .zip")
