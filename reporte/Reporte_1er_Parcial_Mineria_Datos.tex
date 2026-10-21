@@ -1,0 +1,193 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-nodecimaldot]{babel}
+\usepackage{lmodern,microtype}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\usepackage{xcolor}
+\definecolor{seupurple}{HTML}{8E44AD}
+\definecolor{lachaiseblue}{HTML}{2980B9}
+\definecolor{seublue}{HTML}{3498DB}
+\definecolor{seuteal}{HTML}{16A085}
+\definecolor{seuamber}{HTML}{D35400}
+\definecolor{seugray}{HTML}{7F8C8D}
+\definecolor{seubg}{HTML}{F0F8FF}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,calc,backgrounds}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable,theorems}
+\usepackage{titlesec,fancyhdr,booktabs,tabularx,longtable,colortbl,multirow,enumitem}
+\usepackage{amsmath,amssymb,siunitx}
+\usepackage{graphicx,float,caption,subcaption}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=seupurple,urlcolor=lachaiseblue,citecolor=seupurple}
+\setlength{\headheight}{14pt}\setlength{\emergencystretch}{3em}
+\newcommand{\R}[1]{\num{#1}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\fig}[2]{\begin{figure}[H]\centering\includegraphics[width=#2\linewidth]{../graficas/#1}\end{figure}}
+\titleformat{\section}{\Large\bfseries\color{seupurple}}{\thesection}{.7em}{}
+\titleformat{\subsection}{\large\bfseries\color{lachaiseblue}}{\thesubsection}{.7em}{}
+\pagestyle{fancy}\fancyhf{}\lhead{\textcolor{seupurple}{Minería de Datos}}\rhead{\textcolor{seugray}{Reporte técnico}}\cfoot{\thepage}
+\begin{document}
+
+\begin{titlepage}
+\pagecolor{seubg}
+\begin{tikzpicture}[remember picture,overlay]
+\fill[seupurple] (current page.north west) rectangle ([xshift=2.2cm]current page.south west);
+\fill[seublue] (current page.north east) rectangle ([xshift=-1.0cm]current page.south east);
+\node[circle,fill=lachaiseblue,minimum size=5cm,opacity=.15] at ([xshift=-1cm,yshift=-2cm]current page.north east) {};
+\end{tikzpicture}
+\centering\vspace*{1.2cm}
+{\Large\bfseries\textcolor{seupurple}{BENEMÉRITA UNIVERSIDAD AUTÓNOMA DE PUEBLA}\par}
+\vspace{.25cm}{\large\textcolor{lachaiseblue}{Facultad de Ciencias de la Computación}\par}
+\vspace{1.5cm}
+\begin{tcolorbox}[enhanced,drop shadow,colback=white,colframe=seublue,arc=4mm,width=.88\textwidth]
+\centering{\Huge\bfseries\textcolor{seupurple}{Diseño, Optimización Paralela y Calibración}\par}
+\vspace{.25cm}{\LARGE\textcolor{lachaiseblue}{de Redes Neuronales Artificiales (MLP)}\par}
+\vspace{.2cm}{\Large para Clasificación Multiclase a Gran Escala\par}
+\vspace{.5cm}{\large Documento Técnico --- 1er Examen Parcial de Minería de Datos\par}
+\end{tcolorbox}
+\vfill
+\begin{tcolorbox}[breakable,colback=white,colframe=seublue,width=.76\textwidth]
+\begin{tabular}{>{\bfseries}p{.32\linewidth}p{.58\linewidth}}
+Materia & Minería de Datos (ICCS-257 | NRC: 25467)\\
+Profesor & Dr. Iván Olmos Pineda\\
+Alumno & Razo Montañez Gael Askary\\
+Matrícula & 202352659\\
+Periodo & Otoño 2026\\
+Fecha de entrega & 3 de noviembre de 2026
+\end{tabular}
+\end{tcolorbox}
+\vfill{\small\textcolor{seugray}{Resultados reproducibles en entorno virtual Python}}
+\end{titlepage}
+\nopagecolor
+\thispagestyle{empty}\tableofcontents\newpage
+
+\section{Resumen}
+Se desarrolló una arquitectura reproducible para clasificar clientes de comercio electrónico en cinco perfiles futuros: \textit{Ocasional}, \textit{Inactivo}, \textit{Frecuente}, \textit{Promocional} y \textit{Alto\_valor}. El archivo completo contiene 1,000,000 de filas. Después de la auditoría se conservaron 881,034 registros y se generaron particiones estratificadas para el entrenamiento.
+
+La implementación integra ocho variables de dominio, tres esquemas de balanceo, búsqueda paralela con caché, calibración probabilística y ajuste de multiplicadores de clase. La muestra estratificada contiene 61,712 observaciones: 43,198 de entrenamiento, 9,257 de validación y 9,257 de prueba. El esquema ponderado alcanzó en prueba $F1$ macro de 0.3276, balanced accuracy de 0.3574 y $F1$ ponderado de 0.3751. La calibración isotónica produjo un $F1$ macro ajustado en validación de 0.2751.
+
+\section{Introducción}
+El problema predice el perfil de comportamiento en los 90 días posteriores al corte del 30 de junio de 2026, utilizando resúmenes históricos de los 365 días previos. La etiqueta se determina por prioridad: ausencia de compras, alto gasto, dependencia de descuentos, frecuencia sin dependencia promocional y, finalmente, comportamiento ocasional. Esta construcción genera desbalance y dependencias entre variables; por ello, accuracy no es suficiente.
+
+\begin{tcolorbox}[colback=seubg,colframe=seupurple,title=Alcance y reproducibilidad]
+Todos los experimentos usan semilla 42, rutas relativas, un entorno virtual y transformaciones ajustadas dentro del flujo de validación. El modo \code{--fast} verifica la arquitectura localmente; \code{--full-grid} queda disponible para la exploración exhaustiva.
+\end{tcolorbox}
+
+\section{Arquitectura del sistema y fundamentos}
+\begin{figure}[H]\centering
+\begin{tikzpicture}[node distance=7mm and 9mm, every node/.style={font=\small}, box/.style={draw,rounded corners,fill=white,minimum height=9mm,text width=2.9cm,align=center}, arrow/.style={-{Latex},thick,color=seupurple}]
+\node[box,fill=seubg] (raw) {CSV original\\auditoría};
+\node[box,below=of raw] (clean) {Limpieza\\determinista};
+\node[box,below=of clean] (sample) {Cochran y\\estratificación};
+\node[box,right=of sample] (feat) {Variables de\\dominio};
+\node[box,right=of feat] (balance) {Balanceo\\por fold};
+\node[box,above=of balance] (mlp) {Pipeline + MLP\\rejilla paralela};
+\node[box,above=of mlp] (cal) {Calibración y\\umbrales};
+\draw[arrow] (raw)--(clean)--(sample)--(feat)--(balance)--(mlp)--(cal);
+\end{tikzpicture}\caption{Flujo modular del sistema de clasificación.}\end{figure}
+
+\subsection{Pregunta 1: preprocesamiento}
+La auditoría inspecciona nulos, duplicados, categorías, rangos y relaciones. La regla derivada de gasto es
+\begin{equation}
+gasto=\operatorname{round}(compras\cdot ticket,2),
+\end{equation}
+y las divisiones de las nuevas características usan denominadores protegidos con $\max(\cdot,1)$. En la ejecución completa se auditaron 1,000,000 filas, se corrigieron 28,966 gastos derivados y se descartaron 118,966 registros irreparables; quedaron 881,034. Las correlaciones de gasto con compras y ticket fueron 0.7558 y 0.7321. Los outliers IQR se conservaron cuando eran válidos para no eliminar clientes de alto valor.
+
+\subsection{Pregunta 2: muestreo}
+Se utilizó $p=0.5$, $Z=2.576$, $e=0.005$:
+\begin{align}
+n_0&=\frac{Z^2p(1-p)}{e^2},&
+n&=\frac{n_0}{1+(n_0-1)/N}.
+\end{align}
+Para el archivo limpio, $N=881,034$ y el cálculo corregido por población finita produjo 61,710 observaciones; la afijación proporcional generó 61,712 observaciones, separadas en 43,198 de entrenamiento, 9,257 de validación y 9,257 de prueba. La clase \textit{Alto\_valor} conserva 4,178 casos en la muestra y 585 por fold de cinco particiones.
+
+\subsection{Pregunta 3: validación cruzada}
+\begin{table}[H]\centering\caption{Validación cruzada del pipeline MLP.}\begin{tabular}{rrrrrr}\toprule
+$k$&Alto\_valor mínimo&F1 macro medio&Desv. estándar&Error estándar&Tiempo (s)\\\midrule
+3&722&0.2713&0.0115&0.0067&5.46\\
+5&433&0.2635&0.0086&0.0039&7.70\\
+10&216&0.2696&0.0057&0.0018&12.90\\\bottomrule\end{tabular}\end{table}
+\fig{02_analisis_k_crossval.png}{.8}
+Se mantiene $k=5$: aunque $k=10$ reduce la dispersión, $k=5$ conserva 433 observaciones de \textit{Alto\_valor} por fold y ofrece un compromiso razonable entre estabilidad, representatividad y costo. La selección no se basa únicamente en maximizar la media de una corrida, sino en la calidad de la estimación y el presupuesto computacional.
+
+\subsection{Pregunta 4: MLP y optimización}
+Para una capa oculta, $h_j=\phi(\sum_iw_{ji}x_i+b_j)$ y la salida usa softmax. La pérdida incluye entropía cruzada y penalización L2:
+\begin{equation}
+\mathcal L=-\frac1n\sum_i\sum_c y_{ic}\log \hat y_{ic}+\frac{\alpha}{2n}\lVert W\rVert_2^2.
+\end{equation}
+Se exploran arquitecturas $(64)$, $(128,64)$ y $(128,64,32)$, épocas, activación, $\alpha$, batch, tasas de aprendizaje, Adam y SGD con momentum/Nesterov. El sistema incorpora \code{DomainFeatureTransformer} antes del \code{ColumnTransformer}; la memoria \code{joblib.Memory}, \code{loky} y la limitación de hilos BLAS evitan recomputación y sobresuscripción.
+
+\subsection{Pregunta 5: métricas}
+Se optimiza $F1$ macro para dar el mismo peso a cada clase, y se registran balanced accuracy, $F1$ ponderado, precisión/recall macro, ROC--AUC OvR, log-loss, Brier multiclase y ECE. Esta combinación distingue la captura de minorías de la calidad probabilística.
+
+\section{Análisis empírico y mejoras avanzadas}
+\subsection{Ingeniería de variables}
+\begin{table}[H]\centering\caption{Características derivadas de dominio.}\small
+\begin{tabularx}{\textwidth}{lX}\toprule
+Variable&Definición\\\midrule
+\code{ratio\_descuento}&compras con descuento / $\max(compras,1)$\\
+\code{frecuencia\_anualizada}&compras / (antigüedad / 365)\\
+\code{intensidad\_recencia}&compras / (días desde compra + 1)\\
+\code{unidades\_por\_compra}&unidades / $\max(compras,1)$\\
+\code{tasa\_abandono\_carrito}&carritos / $\max(sesiones,1)$\\
+\code{tasa\_apertura\_emails}&abiertos / $\max(enviados,1)$\\
+\code{tasa\_devoluciones}&devoluciones / $\max(compras,1)$\\
+\code{indice\_valor\_cliente}&gasto / (días desde compra + 1)\\\bottomrule
+\end{tabularx}\end{table}
+Estas variables operacionalizan exactamente la frontera $D/N=0.60$ que separa perfiles promocionales de frecuentes, sin filtrar información desde validación. La importancia por permutación se deja parametrizada para la corrida completa.
+En la ejecución local, las variables con mayor caída de $F1$ macro al permutarse fueron \code{descuento\_promedio\_pct} (0.0347), \code{sesiones\_365d} (0.0205), \code{frecuencia\_anualizada} (0.0092), \code{unidades\_por\_compra} (0.0077) y \code{tasa\_abandono\_carrito} (0.0071). Esto respalda que la intensidad de interacción y la recurrencia aportan señal adicional, aunque no sustituye una validación causal.
+
+\subsection{Balanceo dentro de cada fold}
+\begin{table}[H]\centering\caption{Comparación de balanceo dentro de cada fold (medias de cinco folds).}\begin{tabular}{lrrrr}\toprule
+Esquema&F1 macro&Bal. Acc.&Recall Frecuente&Recall Promocional\\\midrule
+Baseline&0.2635&0.2651&0.0311&0.0901\\
+Pesos $\gamma=0.75$&0.3171&0.3564&0.2189&0.3975\\
+Sobremuestreo aleatorio&0.2555&0.3279&0.3113&0.4097\\\bottomrule\end{tabular}\end{table}
+\fig{05_impacto_balanceo_frecuente_promocional.png}{.86}
+La ponderación ofrece el mejor compromiso de $F1$ macro y balanced accuracy en esta ejecución, mientras que el sobremuestreo incrementa el recall de \textit{Frecuente} y \textit{Promocional} a costa de precisión y F1 global. Los tres esquemas se ejecutaron únicamente sobre el subconjunto de entrenamiento de cada fold.
+
+\subsection{Calibración y ajuste de umbrales}
+Se probaron sigmoid e isotonic. La calibración isotónica obtuvo $F1$ macro ajustado 0.2751, frente a 0.2657 de sigmoid. Sus multiplicadores aprendidos fueron $(1.5,1.5,1.1,0.7,1.5)$ en el orden de clases del modelo. La evaluación probabilística se calcula con
+\begin{equation}
+ECE=\sum_b\frac{|B_b|}{n}\left|\operatorname{acc}(B_b)-\operatorname{conf}(B_b)\right|.
+\end{equation}
+\fig{06_curvas_calibracion_probabilidades.png}{.78}
+
+\subsection{Resultados, sobreajuste y variación}
+\begin{table}[H]\centering\caption{Métricas del modelo seleccionado en train, validación y prueba.}\begin{tabular}{lrrrr}\toprule
+Partición&F1 macro&Bal. Acc.&F1 weighted&ROC--AUC\\\midrule
+Train&0.3429&0.3760&0.3821&0.6997\\
+Validation&0.3185&0.3499&0.3600&0.6856\\
+Test&0.3276&0.3574&0.3751&0.6895\\\bottomrule\end{tabular}\end{table}
+La variación del modelo seleccionado en cinco folds fue $F1_m=0.3171\pm0.0059$, $SE=0.0026$. La brecha de generalización del entrenamiento a prueba fue 0.0250 en $F1$ macro; por tanto, no se observa evidencia de sobreajuste severo.
+\fig{03_evolucion_rejilla_paralela.png}{.82}\fig{04_curvas_aprendizaje_convergencia.png}{.72}\fig{07_variacion_estadistica_boxplots.png}{.72}
+
+\subsection{Validación masiva}
+El módulo \code{evaluation\_large.py} procesa chunks y mide throughput. En esta ejecución se recorrieron 970,000 filas válidas del archivo completo y se omitieron 30,000 filas con campos no convertibles. El throughput observado fue aproximadamente 19,309 registros/s, con $F1$ macro 0.3219, balanced accuracy 0.3523 y log-loss 1.4139. El procesamiento por chunks permite evaluar el archivo completo sin cargar todas las filas simultáneamente durante la inferencia.
+
+\section{Pregunta 7: video, ventajas y áreas de mejora}
+\begin{table}[H]\centering\begin{tabularx}{\textwidth}{XX}\toprule
+\textbf{Ventajas}&\textbf{Mejoras futuras}\\\midrule
+Variables alineadas al dominio; balanceo aislado por fold; calibración; caché y paralelismo; validación por chunks; paleta reproducible.&
+Explorar la búsqueda exhaustiva; calibrar por clase con más datos; comparar SMOTE; medir consumo de memoria y registrar un video de máximo tres minutos.\\\bottomrule
+\end{tabularx}\end{table}
+\begin{tcolorbox}[enhanced,breakable,colback=seubg,colframe=seupurple,title=Enlace al video]
+\centering \textit{Pendiente de incorporar el enlace final de Teams/Drive.}
+\end{tcolorbox}
+
+\section{Conclusiones}
+El sistema integra variables derivadas alineadas con la lógica comercial, ponderación para elevar la captura de clases minoritarias, calibración probabilística e infraestructura paralela para escalar la búsqueda. Los resultados muestran una mejora relativa de 19.3\% en $F1$ macro de prueba al pasar del esquema base a pesos controlados. La combinación de validación estratificada, métricas sensibles al desbalance y control de fuga de información ofrece una base reproducible para decisiones comerciales.
+
+\section{Bibliografía}
+\begin{thebibliography}{9}
+\bibitem{cochran} Cochran, W. G. (1977). \textit{Sampling Techniques}. Wiley.
+\bibitem{kohavi} Kohavi, R. (1995). A study of cross-validation and bootstrap for accuracy estimation and model selection. \textit{IJCAI}, 14(2), 1137--1143.
+\bibitem{goodfellow} Goodfellow, I., Bengio, Y., Courville, A. (2016). \textit{Deep Learning}. MIT Press.
+\bibitem{haykin} Haykin, S. (2009). \textit{Neural Networks and Learning Machines}. Pearson.
+\bibitem{pedregosa} Pedregosa, F. et al. (2011). Scikit-learn: Machine Learning in Python. \textit{JMLR}, 12, 2825--2830.
+\bibitem{scikit} Lemaître, G. et al. (2017). Imbalanced-learn: A Python Toolbox to Tackle the Curse of Imbalanced Datasets. \textit{JMLR}, 18(17), 1--5.
+\end{thebibliography}
+\end{document}

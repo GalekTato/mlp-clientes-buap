@@ -1,0 +1,19 @@
+{
+  "best_params": {
+    "model__activation": "relu",
+    "model__alpha": 0.001,
+    "model__batch_size": 256,
+    "model__hidden_layer_sizes": [
+      64
+    ],
+    "model__learning_rate": "adaptive",
+    "model__learning_rate_init": 0.001,
+    "model__max_iter": 80,
+    "model__solver": "adam"
+  },
+  "best_score": 0.31610412782347047,
+  "k": 5,
+  "fast": true,
+  "balance": "weighted",
+  "n_jobs": 2
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "log_loss":1.3193336325,
+    "brier_multiclass":0.6871834264,
+    "ece":0.0039837348,
+    "method":"sigmoid",
+    "tuned_f1_macro":0.2657172053,
+    "multipliers":[
+      1.5,
+      1.5,
+      1.2,
+      0.9,
+      1.5
+    ]
+  },
+  {
+    "log_loss":1.3133372173,
+    "brier_multiclass":0.6852717036,
+    "ece":0.0042672543,
+    "method":"isotonic",
+    "tuned_f1_macro":0.2751002964,
+    "multipliers":[
+      1.5,
+      1.5,
+      1.1,
+      0.7,
+      1.5
+    ]
+  }
+]

@@ -1,0 +1,26 @@
+name: quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile source
+        shell: bash
+        run: python -m py_compile preprocesameinto.py preprocesamiento.py muestreo.py crossVal.py entrenamiento.py main.py empaquetar_entrega.py src/*.py
+      - name: Verify large dataset is not tracked
+        shell: bash
+        run: |
+          if git ls-files | grep -E 'clientes_comercio.*\.csv$'; then
+            echo "Large dataset must remain outside the public repository"
+            exit 1
+          fi
