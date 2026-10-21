@@ -1,4 +1,4 @@
-"""Orquestador de las etapas del proyecto."""
+"""Orquesta limpieza, muestreo, validación, entrenamiento y evaluación final."""
 from __future__ import annotations
 import argparse
 from pathlib import Path

@@ -1,4 +1,8 @@
-"""Alias compatible del módulo exigido por la rúbrica."""
+"""Alias legible de ``preprocesameinto.py``.
+
+La rúbrica exige conservar el nombre con el error tipográfico; este archivo
+permite ejecutar la misma implementación usando el nombre corregido.
+"""
 from preprocesameinto import *  # noqa: F401,F403
 
 if __name__ == "__main__":

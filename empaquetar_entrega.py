@@ -1,4 +1,8 @@
-"""Compila y empaqueta la entrega desde la estructura profesional."""
+"""Compila el PDF y crea un ZIP de código y evidencias por pregunta.
+
+El PDF se conserva separado en ``entrega/``. El ZIP contiene los scripts
+directamente en su raíz y excluye reporte, documentación técnica y guion.
+"""
 from __future__ import annotations
 from pathlib import Path
 import shutil
@@ -16,6 +20,8 @@ def clean_delivery():
     for path in delivery.iterdir():
         if path.is_file():
             path.unlink()
+        elif path.is_dir():
+            shutil.rmtree(path)
 
 
 def clean_latex_artifacts():
@@ -43,24 +49,27 @@ def package(name: str):
     staging = ROOT / f"_staging_{name}"
     if staging.exists(): shutil.rmtree(staging)
     groups = {
-        "Pregunta_1_Preprocesamiento": ["preprocesameinto.py", "preprocesamiento.py", "resultados/auditoria_preprocesamiento.json", "resultados/auditoria_preprocesamiento.md"],
-        "Pregunta_2_Muestreo": ["muestreo.py", "datos/train.csv", "datos/validation.csv", "datos/test.csv", "resultados/calculo_muestra.json", "resultados/distribucion_particiones.csv"],
-        "Pregunta_3_CrossVal": ["crossVal.py", "resultados/reporte_crossval.csv", "graficas/02_analisis_k_crossval.png"],
+        # El código se copia una sola vez en la raíz del ZIP; aquí solo van
+        # los datos y evidencias asociados con cada pregunta.
+        "Pregunta_1_Preprocesamiento": [
+            "resultados/auditoria_preprocesamiento.json",
+            "resultados/auditoria_preprocesamiento.md",
+        ],
+        "Pregunta_2_Muestreo": [
+            "datos/train.csv", "datos/validation.csv", "datos/test.csv",
+            "resultados/calculo_muestra.json",
+            "resultados/distribucion_particiones.csv",
+        ],
+        "Pregunta_3_CrossVal": [
+            "resultados/reporte_crossval.csv",
+            "resultados/reporte_crossval.json",
+            "graficas/02_analisis_k_crossval.png",
+        ],
         "Pregunta_4_Entrenamiento": [
-            "entrenamiento.py",
             "modelos/mejor_modelo_mlp.joblib",
             "resultados/resultados_gridsearch.csv",
         ],
         "Pregunta_5_y_6_Experimentos": ["resultados", "graficas"],
-        "Codigo_Fuente": ["src"],
-        "Documentacion_Proyecto": ["README.md", "docs"],
-        "Reporte_Tecnico": [
-            "reporte/Reporte_1er_Parcial_Mineria_Datos.tex",
-            "reporte/Documentacion_Tecnica_Proyecto.md",
-            "reporte/Guion_Video_3_Minutos.md",
-            "reporte/Prompt_Gamma_AI.md",
-            f"entrega/{DELIVERY_BASENAME}.pdf",
-        ],
     }
     for group, files in groups.items():
         for rel in files:
@@ -70,9 +79,14 @@ def package(name: str):
             if src.is_dir(): shutil.copytree(src, dst, ignore=shutil.ignore_patterns("*.pyc"))
             else:
                 dst.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, dst)
-    root_files = ["preprocesameinto.py", "preprocesamiento.py", "muestreo.py", "crossVal.py", "entrenamiento.py", "main.py", "empaquetar_entrega.py", "requirements.txt"]
+    root_files = [
+        "preprocesameinto.py", "preprocesamiento.py", "muestreo.py",
+        "crossVal.py", "entrenamiento.py", "main.py",
+        "empaquetar_entrega.py", "proyecto_utils.py", "requirements.txt",
+    ]
     for rel in root_files:
         shutil.copy2(ROOT / rel, staging / Path(rel).name)
+    shutil.copytree(ROOT / "src", staging / "src", ignore=shutil.ignore_patterns("*.pyc"))
     zip_path = ROOT / "entrega" / f"{name}.zip"
     if zip_path.exists(): zip_path.unlink()
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
