@@ -27,8 +27,7 @@ def main():
     ax1.set_title("Compromiso de representatividad y costo computacional")
     save_figure(fig, FIGURES / "02_analisis_k_crossval.png"); plt.close(fig)
 
-    grid_path = RESULTS / "resultados_gridsearch_v2.csv"
-    if not grid_path.exists(): grid_path = RESULTS / "resultados_gridsearch.csv"
+    grid_path = RESULTS / "resultados_gridsearch.csv"
     grid = pd.read_csv(grid_path)
     fig, ax = plt.subplots(figsize=(9, 5))
     top = grid.nlargest(min(10, len(grid)), "mean_test_f1_macro")
@@ -45,8 +44,6 @@ def main():
         save_figure(fig, FIGURES / "04_curvas_aprendizaje_convergencia.png"); plt.close(fig)
 
     balance_path = RESULTS / "balance_comparison.json"
-    if not balance_path.exists():
-        balance_path = RESULTS / "balance_comparison_v2.json"
     if balance_path.exists():
         rows = json.loads(balance_path.read_text(encoding="utf-8"))
         frame = pd.DataFrame([
@@ -62,7 +59,6 @@ def main():
         save_figure(fig, FIGURES / "05_impacto_balanceo_frecuente_promocional.png"); plt.close(fig)
 
     cal = RESULTS / "calibracion.json"
-    if not cal.exists(): cal = RESULTS / "calibracion_v2.json"
     if cal.exists():
         frame = pd.read_json(cal)
         fig, ax = plt.subplots(figsize=(8, 5)); frame.set_index("method")[["log_loss", "brier_multiclass", "ece"]].plot(kind="bar", ax=ax, color=[COLORS["seupurple"], COLORS["seuteal"], COLORS["seublue"]])

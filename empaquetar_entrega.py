@@ -6,6 +6,17 @@ import subprocess
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
+LATEX_TEMP_EXTENSIONS = {".aux", ".log", ".out", ".toc", ".synctex.gz"}
+
+
+def clean_latex_artifacts():
+    for directory in (ROOT / "reporte", ROOT / "entrega"):
+        for path in directory.iterdir():
+            if path.is_file() and (
+                path.suffix in LATEX_TEMP_EXTENSIONS
+                or path.name.endswith(".synctex.gz")
+            ):
+                path.unlink()
 
 def compile_report():
     report = ROOT / "reporte"
@@ -17,6 +28,7 @@ def compile_report():
     pdf = delivery / "Reporte_1er_Parcial_Mineria_Datos.pdf"
     shutil.copy2(pdf, delivery / "Tarea1_GaelAskaryRazoMontanez.pdf")
     shutil.copy2(pdf, delivery / "Examen1_GaelAskaryRazoMontanez.pdf")
+    clean_latex_artifacts()
 
 def package(name: str):
     staging = ROOT / f"_staging_{name}"
@@ -28,9 +40,7 @@ def package(name: str):
         "Pregunta_4_Entrenamiento": [
             "entrenamiento.py",
             "modelos/mejor_modelo_mlp.joblib",
-            "modelos/mejor_modelo_mlp_v2.joblib",
             "resultados/resultados_gridsearch.csv",
-            "resultados/resultados_gridsearch_v2.csv",
         ],
         "Pregunta_5_y_6_Experimentos": ["resultados", "graficas"],
         "Codigo_Fuente": ["src"],

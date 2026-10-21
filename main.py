@@ -38,7 +38,6 @@ def main():
         )
         payload = json.dumps(result, indent=2)
         (RESULTS / "validacion_masiva.json").write_text(payload, encoding="utf-8")
-        (RESULTS / "validacion_masiva_v2.json").write_text(payload, encoding="utf-8")
 
 
 if __name__ == "__main__":

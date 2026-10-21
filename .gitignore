@@ -18,6 +18,8 @@ reporte/*.log
 reporte/*.out
 reporte/*.toc
 reporte/*.synctex.gz
+reporte/~$*
+reporte/*.ppwritelock
 entrega/*.aux
 entrega/*.log
 entrega/*.out

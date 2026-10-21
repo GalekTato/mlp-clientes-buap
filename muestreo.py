@@ -8,9 +8,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chisquare, ks_2samp
 from sklearn.model_selection import train_test_split
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 from proyecto_utils import CLASS_ORDER, NUMERIC_COLUMNS, TARGET, finite_population_sample_size, ensure_dir, read_dataset, write_json
 from src.paths import DATA, first_existing
@@ -64,10 +61,6 @@ def run(input_path="dataset_limpio.csv", output_dir=".", report_dir="reportes", 
     test.to_csv(output_dir / "test.csv", index=False)
     dist = distribution_report(df, sample, train, validation, test)
     dist.to_csv(report_dir / "distribucion_particiones.csv", index=False)
-    pivot = dist.pivot(index="class", columns="partition", values="proportion").reindex(CLASS_ORDER)
-    pivot.plot(kind="bar", figsize=(10, 5))
-    plt.ylabel("Proporción"); plt.title("Distribución de clases antes y después del muestreo")
-    plt.tight_layout(); plt.savefig(Path(report_dir).parent / "graficas_distribucion_clases.png", dpi=300); plt.close()
     numeric = []
     for name, part in {"original": df, "sample": sample, "train": train, "validation": validation, "test": test}.items():
         summary = part[NUMERIC_COLUMNS].agg(["mean", "std"]).T.reset_index(names="variable")

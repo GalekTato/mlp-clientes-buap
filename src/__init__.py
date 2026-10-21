@@ -1,1 +1,1 @@
-"""Componentes internos de la versión 2 del proyecto."""
+"""Componentes internos reutilizables del proyecto."""

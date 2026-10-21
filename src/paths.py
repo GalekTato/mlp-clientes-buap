@@ -1,4 +1,4 @@
-"""Rutas reproducibles y compatibilidad con la raíz v1."""
+"""Rutas reproducibles del proyecto."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]

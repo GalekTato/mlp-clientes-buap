@@ -6,9 +6,6 @@ from pathlib import Path
 import time
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.metrics import make_scorer, f1_score, balanced_accuracy_score
 from proyecto_utils import TARGET, CLASS_ORDER, ensure_dir, read_dataset, write_json
@@ -65,11 +62,6 @@ def run(input_path="train.csv", report_dir="reportes", ks=(3, 5, 10), fast=True,
     chosen = 5 if 5 in report["k"].values else int(report.iloc[0]["k"])
     ensure_dir(report_dir)
     report.to_csv(Path(report_dir) / "reporte_crossval.csv", index=False)
-    plt.figure(figsize=(8, 5))
-    plt.bar(report["k"].astype(str), report["elapsed_seconds"], label="Tiempo (s)")
-    plt.xlabel("Número de particiones k"); plt.ylabel("Tiempo (s)")
-    plt.title("Costo computacional estimado por k"); plt.tight_layout()
-    plt.savefig(Path(report_dir).parent / "graficas_cv_tiempo.png", dpi=300); plt.close()
     write_json({"chosen_k": chosen, "fold_minority_sizes": details}, Path(report_dir) / "reporte_crossval.json")
     print(f"k recomendado: {chosen}; tamaños mínimos Alto_valor: {details[str(chosen)]}")
     return chosen

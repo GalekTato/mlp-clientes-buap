@@ -15,21 +15,16 @@ from proyecto_utils import TARGET, CLASS_ORDER
 def main():
     apply_theme()
     model_path = MODELS / "mejor_modelo_mlp.joblib"
-    if not model_path.exists():
-        model_path = MODELS / "mejor_modelo_mlp_v2.joblib"
     model = joblib.load(model_path)
     test = pd.read_csv(DATA / "test.csv")
     y = test.pop(TARGET); pred = model.predict(test)
     result_path = RESULTS / "validacion_masiva.json"
-    if not result_path.exists():
-        result_path = RESULTS / "validacion_masiva_v2.json"
     large = json.loads(result_path.read_text(encoding="utf-8"))
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     sns.heatmap(confusion_matrix(y, pred, labels=CLASS_ORDER, normalize="true"), annot=True, fmt=".2f", ax=axes[0], cmap="Purples", xticklabels=CLASS_ORDER, yticklabels=CLASS_ORDER)
     sns.heatmap(np.asarray(large["confusion_matrix"]) / np.maximum(np.asarray(large["confusion_matrix"]).sum(axis=1, keepdims=True), 1), annot=True, fmt=".2f", ax=axes[1], cmap="Blues", xticklabels=CLASS_ORDER, yticklabels=CLASS_ORDER)
     axes[0].set_title("Test"); axes[1].set_title("Archivo local completo")
-    save_figure(fig, FIGURES / "08_matrices_confusion_test_y_archivo.png")
-    save_figure(fig, FIGURES / "08_matrices_confusion_test_y_1M.png"); plt.close(fig)
+    save_figure(fig, FIGURES / "08_matrices_confusion_test_y_archivo.png"); plt.close(fig)
     proba = model.predict_proba(test)
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     for i, cls in enumerate(model.classes_):

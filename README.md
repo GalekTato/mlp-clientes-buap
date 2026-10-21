@@ -35,7 +35,7 @@ python muestreo.py
 python crossVal.py --n-jobs 2
 python entrenamiento.py --balance weighted --calibrate --n-jobs 2
 python main.py --skip-clean --balance weighted --calibrate --large-validation
-python -m src.generate_v2_figures
+python -m src.generate_figures
 python -m src.generate_extra_figures
 python empaquetar_entrega.py
 ```

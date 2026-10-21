@@ -173,11 +173,8 @@ def run(train_path="train.csv", validation_path="validation.csv", test_path="tes
         search.fit(X, y, **fit_kwargs)
     report_dir = ensure_dir(report_dir)
     joblib.dump(search.best_estimator_, MODELS / "mejor_modelo_mlp.joblib")
-    # Alias histórico para compatibilidad con entregas y scripts anteriores.
-    joblib.dump(search.best_estimator_, MODELS / "mejor_modelo_mlp_v2.joblib")
     results = pd.DataFrame(search.cv_results_)
     results.to_csv(report_dir / "resultados_gridsearch.csv", index=False)
-    results.to_csv(report_dir / "resultados_gridsearch_v2.csv", index=False)
     ranking_rows = []
     for row_index, row in results.iterrows():
         for metric in ["f1_macro", "f1_weighted", "balanced_accuracy", "precision_macro", "recall_macro"]:
@@ -208,7 +205,6 @@ def run(train_path="train.csv", validation_path="validation.csv", test_path="tes
     importance = pd.DataFrame({"feature": names, "importance_mean": permutation.importances_mean,
                                "importance_std": permutation.importances_std}).sort_values("importance_mean", ascending=False)
     importance.to_csv(report_dir / "importancia_permutacion.csv", index=False)
-    importance.to_csv(report_dir / "importancia_permutacion_v2.csv", index=False)
     reports = {}
     for name, frame in [("train", train), ("validation", validation), ("test", test)]:
         result, y_true, pred, _ = evaluate(search.best_estimator_, frame, name)
@@ -225,8 +221,6 @@ def run(train_path="train.csv", validation_path="validation.csv", test_path="tes
     pd.DataFrame(fold_rows).to_csv(report_dir / "variacion_estadistica_mejor_modelo.csv", index=False)
     balance_rows = compare_balance_schemes(search.best_estimator_, X, y, k=k)
     write_json(balance_rows, report_dir / "balance_comparison.json")
-    # Alias histórico para no romper scripts y entregas ya existentes.
-    write_json(balance_rows, report_dir / "balance_comparison_v2.json")
     make_plots(search.best_estimator_, test, search.cv_results_, graph_dir)
     if calibrate_models:
         calibration_rows = []
@@ -238,7 +232,6 @@ def run(train_path="train.csv", validation_path="validation.csv", test_path="tes
             joblib.dump(calibrated, MODELS / f"modelo_calibrado_{method}.joblib")
             calibration_rows.append(metrics)
         pd.DataFrame(calibration_rows).to_json(report_dir / "calibracion.json", orient="records", indent=2)
-        pd.DataFrame(calibration_rows).to_json(report_dir / "calibracion_v2.json", orient="records", indent=2)
     write_json({"best_params": search.best_params_, "best_score": search.best_score_, "k": k,
                 "fast": fast, "balance": balance, "n_jobs": n_jobs},
                report_dir / "mejor_modelo.json")
