@@ -2,115 +2,79 @@
 
 ```text
 Actúa como diseñador editorial académico y crea una presentación en español
-de 10 a 12 diapositivas sobre el proyecto:
+de 12 diapositivas sobre el proyecto:
 
-“Sistema reproducible de clasificación multiclase de clientes mediante una
-Red Neuronal Artificial MLP”.
+“Preprocesamiento, Muestreo de Cochran, Validación Cruzada y Optimización de un
+Perceptrón Multicapa (MLP) para Clasificación Multiclase de Clientes”.
 
-No presentes el trabajo como versiones, iteraciones o mejoras separadas.
-Explícalo como un único sistema completo, desde los datos hasta la evaluación.
+Explícalo como un sistema único, riguroso y completo, desde la auditoría del
+millón de registros hasta la inferencia masiva fuera de entrenamiento.
 
-## Identificación
+## Identificación institucional
 
-- Materia: Minería de Datos
-- NRC: 25467
-- Clave: ICCS-257
+- Institución: Benemérita Universidad Autónoma de Puebla (BUAP)
+- Unidad académica: Facultad de Ciencias de la Computación (FCC)
+- Materia: Minería de Datos (ICCS-257 | NRC: 25467)
 - Profesor: Dr. Iván Olmos Pineda
-- Alumno: Razo Montañez Gael Askary
-- Matrícula: 202352659
+- Alumno: Gael Askary Razo Montañez (Matrícula: 202352659)
 - Periodo: Otoño 2026
 
-## Datos y objetivo
+## Estructura por diapositiva
 
-El dataset contiene 1,000,000 de registros y 31 columnas. Después de la
-auditoría se conservaron 881,034 registros. El objetivo es clasificar cinco
-perfiles: Inactivo, Alto_valor, Promocional, Frecuente y Ocasional.
+1. Portada institucional BUAP – FCC.
+2. Planteamiento del problema: predicción del perfil a 90 días futuros a partir de 365 días históricos (5 clases: Inactivo, Alto_valor, Promocional, Frecuente, Ocasional) y límite estocástico de Bayes.
+3. Preprocesamiento determinista (`preprocesamiento.py`):
+   - 1,000,000 de filas de entrada -> 940,000 filas limpias conservadas (94.0%).
+   - 60,000 filas rescatadas: 7,562 con formato monetario en ticket, 22,438 con variantes léxicas categóricas y 30,000 con recálculo exacto de gasto (`round(compras * ticket, 2)`).
+   - 60,000 filas eliminadas por causa excluyente: 30,000 nulos irrecuperables y 30,000 fuera de rango (0 duplicados, 0 violaciones de dependencias).
+4. Muestreo estratificado de Cochran (`muestreo.py`):
+   - Población limpia N = 940,000, Z = 2.576, e = 0.005 -> n_FPC = 61,983; muestra estratificada = 61,985.
+   - Particiones: train = 43,389 (70%), validation = 9,298 (15%), test = 9,298 (15%).
+   - Pruebas ji-cuadrada (p >= 0.9966) y Kolmogorov–Smirnov (p > 0.05 en las 23 variables numéricas).
+5. Validación cruzada estratificada (`crossVal.py`):
+   - Comparación de k in {3, 5, 10} sobre train.csv.
+   - Regla de decisión: mayor k con al menos 500 casos de Alto_valor por pliegue (k=3: 980, k=5: 588, k=10: 294). Selección: k* = 5.
+6. Ingeniería de variables e importancia por permutación:
+   - 8 variables de dominio dentro del pipeline (`DomainFeatureTransformer`).
+   - Top variables originales por permutación en validación: `sesiones_365d` (+0.0389), `descuento_promedio_pct` (+0.0345) y `compras_365d` (+0.0212).
+7. Selección del exponente de balanceo gamma* (`entrenamiento.py`):
+   - Barrido en 5-fold CV sobre train: gamma in {0.0, 0.25, 0.50, 0.75}.
+   - Elección por regla 1-SE: gamma* = 0.50 (F1-Macro CV = 0.3249 ± 0.0017).
+8. Búsqueda exhaustiva en rejilla del MLP (472 combinaciones):
+   - 216 combinaciones Adam + 256 combinaciones SGD con momentum y Nesterov (2,360 fits, 0 fallos).
+   - Configuración ganadora: capas (128, 64), activación tanh, solver sgd, momentum 0.95, Nesterov True, alpha 0.001, lr 0.001, batch 256 (parada temprana en época 29, F1-Macro CV = 0.3349 ± 0.0029).
+9. Resultados en Train, Validation y Test y ausencia de sobreajuste:
+   - Train: Accuracy 0.3957, Balanced Accuracy 0.3532, F1-Macro 0.3435, ROC-AUC 0.6946.
+   - Validation: Accuracy 0.3885, Balanced Accuracy 0.3442, F1-Macro 0.3340, ROC-AUC 0.6865.
+   - Test: Accuracy 0.3914, Balanced Accuracy 0.3503, F1-Macro 0.3383 (0.3457 con multiplicadores), ROC-AUC 0.6901.
+   - Brecha Train - Test en F1-Macro: 0.0052.
+10. Variación estadística (Bootstrap B = 1,000 en Test) y comparación inter-algorítmica:
+   - IC 95% en Test: F1-Macro [0.3279, 0.3494], Balanced Accuracy [0.3395, 0.3619], ROC-AUC [0.6830, 0.6971].
+   - Convergencia de LogisticRegression (F1 0.3396, AUC 0.6887), HistGradientBoosting (F1 0.3390, AUC 0.6960) y MLP (F1 0.3383, AUC 0.6901).
+11. Calibración probabilística (`FrozenEstimator`) y evaluación masiva por lotes:
+   - Calibración isotónica en Test: Log-Loss 1.2773, Brier 0.7060, ECE 0.0252.
+   - Evaluación por lotes: 896,611 filas limpias fuera de train (+ 60,000 eliminadas + 43,389 train = 1,000,000) a 40,321.3 filas/s, F1-Macro = 0.3348, ROC-AUC = 0.6881.
+12. Conclusiones, fortalezas arquitectónicas y líneas de mejora futura.
 
-## Estructura obligatoria
+## Gráficas del proyecto a integrar
 
-1. Portada institucional.
-2. Problema comercial y objetivo de clasificación.
-3. Comprensión del dataset y distribución desbalanceada.
-4. Auditoría: nulos, dominios, rangos, duplicados y reglas relacionales.
-5. Muestreo de Cochran y particiones:
-   - muestra: 61,712;
-   - train: 43,198;
-   - validation: 9,257;
-   - test: 9,257.
-6. Ingeniería de variables:
-   ratio_descuento, frecuencia_anualizada, intensidad_recencia,
-   unidades_por_compra, tasa_abandono_carrito, tasa_apertura_emails,
-   tasa_devoluciones e indice_valor_cliente.
-7. Pipeline:
-   DomainFeatureTransformer, ColumnTransformer, StandardScaler,
-   OneHotEncoder y MLPClassifier.
-8. Validación cruzada estratificada:
-   explicar la selección de k=5 y la representación de Alto_valor.
-9. Balanceo dentro de folds:
-   - distribución original: F1 macro 0.2769;
-   - ponderación: F1 macro 0.3122;
-   - sobremuestreo: F1 macro 0.2614.
-10. Resultados del modelo:
-   - Train: F1 macro 0.3429, balanced accuracy 0.3760;
-   - Validation: F1 macro 0.3185, balanced accuracy 0.3499;
-   - Test: F1 macro 0.3276, balanced accuracy 0.3574;
-   - Test ROC-AUC OvR: 0.6895.
-11. Evaluación del archivo completo:
-   - 970,000 filas válidas;
-   - 30,000 omitidas por campos no convertibles;
-   - throughput: 19,309 registros/s;
-   - F1 macro: 0.3219;
-   - balanced accuracy: 0.3523;
-   - log-loss: 1.4139.
-12. Calibración, conclusiones, ventajas y áreas de trabajo futuro.
+- `graficas/01_distribucion_clases_cochran.png`
+- `graficas/02_analisis_k_crossval.png`
+- `graficas/11_barrido_gamma.png`
+- `graficas/03_evolucion_rejilla_paralela.png`
+- `graficas/04_curvas_aprendizaje_convergencia.png`
+- `graficas/05_impacto_balanceo_frecuente_promocional.png`
+- `graficas/06_curvas_calibracion_probabilidades.png`
+- `graficas/07_variacion_estadistica_boxplots.png`
+- `graficas/08_matrices_confusion_test_y_archivo.png`
+- `graficas/09_curvas_roc_pr_multiclase.png`
+- `graficas/10_auc_area_multiclase.png`
 
-## Uso obligatorio de gráficas
+## Paleta institucional BUAP – FCC
 
-Incluye y referencia visualmente estas imágenes del proyecto. No inventes
-gráficas nuevas si la imagen indicada ya contiene la evidencia solicitada:
-
-- `graficas/01_distribucion_clases_cochran.png`: distribución de clases.
-- `graficas/02_analisis_k_crossval.png`: selección de k.
-- `graficas/03_evolucion_rejilla_paralela.png`: configuraciones.
-- `graficas/04_curvas_aprendizaje_convergencia.png`: convergencia.
-- `graficas/05_impacto_balanceo_frecuente_promocional.png`: balanceo.
-- `graficas/06_curvas_calibracion_probabilidades.png`: calibración.
-- `graficas/07_variacion_estadistica_boxplots.png`: variación.
-- `graficas/08_matrices_confusion_test_y_archivo.png`: matrices de confusión.
-- `graficas/09_curvas_roc_pr_multiclase.png`: ROC y Precision-Recall.
-- `graficas/10_auc_area_multiclase.png`: área bajo la curva ROC-AUC y PR-AUC
-  por clase. Destaca esta como la gráfica de AUC/área bajo la curva.
-
-Para cada gráfica incluye una frase breve que explique qué significa, no solo
-su título. Usa las gráficas como evidencia y evita llenar las diapositivas con
-tablas extensas.
-
-## Estilo visual
-
-Usa una estética institucional, académica, clara y moderna:
-
-- `seupurple`: #8E44AD
-- `lachaiseblue`: #2980B9
-- `seublue`: #3498DB
-- `seuteal`: #16A085
-- `seuamber`: #D35400
-- `seugray`: #7F8C8D
-- `seubg`: #F0F8FF
-
-Colores de clase:
-
-- Alto_valor: seupurple
-- Frecuente: lachaiseblue
-- Ocasional: seublue
-- Promocional: seuteal
-- Inactivo: seuamber
-
-Usa fondo claro, títulos morados, subtítulos azules, tarjetas con bordes
-redondeados, etiquetas legibles, gráficos grandes y alto contraste. Incluye
-notas del presentador de 15 a 25 segundos por diapositiva. La presentación
-debe poder exponerse en aproximadamente tres minutos.
-
-No inventes métricas, nombres, enlaces ni resultados. No uses expresiones como
-“versión 1”, “versión 2” o “mejora sobre una versión anterior”. Presenta todo
-como una implementación única y completa.
+- Azul marino BUAP: `#003B5C`
+- Azul FCC: `#0090D0`
+- Naranja FCC: `#F08A00`
+- Verde azulado: `#16A085`
+- Fondo claro: `#F2F6FA`
 ```

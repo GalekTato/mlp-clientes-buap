@@ -1,50 +1,53 @@
 {
-  "path": "datos\\clientes_comercio_1000000_alumnos (1).csv",
-  "rows": 970000,
-  "skipped_rows": 30000,
-  "elapsed_seconds": 50.234760200000096,
-  "throughput_rows_per_second": 19309.338715625006,
-  "accuracy": 0.35674123711340205,
-  "f1_macro": 0.3219114615639641,
-  "f1_weighted": 0.3622118819490172,
-  "balanced_accuracy": 0.35228096306014484,
-  "roc_auc_ovr": 0.677397019271077,
-  "log_loss": 1.4139274152568575,
+  "path": "D:\\Miner\u00eda de datos\\1er parcial\\datos\\clientes_comercio_1000000_alumnos (1).csv",
+  "rows": 896611,
+  "rows_evaluated": 896611,
+  "removed_by_cleaning": 60000,
+  "excluded_train_ids": 43389,
+  "skipped_rows": 103389,
+  "elapsed_seconds": 22.23663149999993,
+  "throughput_rows_per_second": 40321.34993108119,
+  "accuracy": 0.38778913040326296,
+  "f1_macro": 0.3347952433829149,
+  "f1_weighted": 0.3858157937675387,
+  "balanced_accuracy": 0.34633929386911844,
+  "roc_auc_ovr": 0.6881167199021936,
+  "log_loss": 1.3269187622675596,
   "confusion_matrix": [
     [
-      142088,
-      15385,
-      36149,
-      30739,
-      90941
+      147469,
+      8841,
+      25568,
+      15300,
+      94233
     ],
     [
-      4201,
-      26888,
-      11055,
-      12800,
-      10737
+      4127,
+      21682,
+      8565,
+      9966,
+      16411
     ],
     [
-      18026,
-      13853,
-      31552,
-      6435,
-      18872
+      18817,
+      10041,
+      25237,
+      3035,
+      24911
     ],
     [
-      20250,
-      25602,
-      10490,
-      28673,
-      35288
+      21322,
+      17498,
+      6662,
+      20269,
+      45357
     ],
     [
-      120097,
-      37350,
-      49739,
-      55952,
-      116838
+      126810,
+      23847,
+      35067,
+      32537,
+      133039
     ]
   ],
   "execution_status": "executed_full_dataset"

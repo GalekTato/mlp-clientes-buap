@@ -1,9 +1,9 @@
-"""Compila el PDF y crea un ZIP de código, evidencias por pregunta y carpeta auxiliares.
+"""Compila el reporte en PDF y empaqueta el archivo ZIP de entrega oficial.
 
-El PDF y el código fuente LaTeX se conservan fuera del ZIP. El ZIP contiene en su
-raíz los scripts solicitados y ``README.md``, las evidencias por pregunta y una
-carpeta separada ``auxiliares/`` con la explicación técnica detallada, el prompt
-de Gamma, el guion del video y la documentación complementaria.
+El PDF compilado se deposita tanto en ``reporte/Reporte_1er_Parcial_Mineria_Datos.pdf``
+como en ``entrega/1ERPARCIAL_GAELASKARYRAZOMONTAÑEZ_MD.pdf``. El archivo ZIP contiene
+en su raíz los scripts principales y ``README.md``, las carpetas de evidencias por
+pregunta y la carpeta ``auxiliares/`` con la documentación técnica complementaria.
 """
 from __future__ import annotations
 from pathlib import Path
@@ -28,6 +28,8 @@ def clean_delivery():
 
 def clean_latex_artifacts():
     for directory in (ROOT / "reporte", ROOT / "entrega"):
+        if not directory.exists():
+            continue
         for path in directory.iterdir():
             if path.is_file() and (
                 path.suffix in LATEX_TEMP_EXTENSIONS
@@ -51,6 +53,7 @@ def compile_report():
     subprocess.run(command, cwd=report, check=True, stdout=subprocess.DEVNULL)
     subprocess.run(command, cwd=report, check=True, stdout=subprocess.DEVNULL)
     pdf = delivery / "Reporte_1er_Parcial_Mineria_Datos.pdf"
+    shutil.copy2(pdf, report / "Reporte_1er_Parcial_Mineria_Datos.pdf")
     shutil.copy2(pdf, delivery / f"{DELIVERY_BASENAME}.pdf")
     pdf.unlink()
     clean_latex_artifacts()
@@ -61,8 +64,6 @@ def package(name: str):
     if staging.exists():
         shutil.rmtree(staging)
     groups = {
-        # El código y README.md se copian una sola vez en la raíz del ZIP; aquí
-        # van los datos y evidencias asociados con cada pregunta.
         "Pregunta_1_Preprocesamiento": [
             "resultados/auditoria_preprocesamiento.json",
             "resultados/auditoria_preprocesamiento.md",
@@ -90,27 +91,29 @@ def package(name: str):
             src = ROOT / rel
             if not src.exists():
                 continue
-            dst = staging / group / (src.name if src.is_file() else src.name)
+            dst = staging / group / src.name
             if src.is_dir():
-                shutil.copytree(src, dst, ignore=shutil.ignore_patterns("*.pyc"))
+                shutil.copytree(src, dst, ignore=shutil.ignore_patterns("*.pyc", "__pycache__"))
             else:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dst)
     root_files = [
         "README.md",
-        "preprocesameinto.py",
         "preprocesamiento.py",
         "muestreo.py",
         "crossVal.py",
         "entrenamiento.py",
+        "modelos_referencia.py",
         "main.py",
         "empaquetar_entrega.py",
         "proyecto_utils.py",
         "requirements.txt",
     ]
     for rel in root_files:
-        shutil.copy2(ROOT / rel, staging / Path(rel).name)
-    shutil.copytree(ROOT / "src", staging / "src", ignore=shutil.ignore_patterns("*.pyc"))
+        src_file = ROOT / rel
+        if src_file.exists():
+            shutil.copy2(src_file, staging / Path(rel).name)
+    shutil.copytree(ROOT / "src", staging / "src", ignore=shutil.ignore_patterns("*.pyc", "__pycache__"))
     if (ROOT / "auxiliares").exists():
         shutil.copytree(ROOT / "auxiliares", staging / "auxiliares")
     zip_path = ROOT / "entrega" / f"{name}.zip"

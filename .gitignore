@@ -3,6 +3,10 @@ __pycache__/
 *.pyc
 *.joblib
 cache_pipeline/
+logs/
+scratch/
+requisitos/
+backup_pre_correccion/
 datos/*.csv
 resultados/cache/
 _staging_*/

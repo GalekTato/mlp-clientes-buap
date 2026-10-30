@@ -1,30 +1,71 @@
 [
   {
-    "log_loss":1.3193336325,
-    "brier_multiclass":0.6871834264,
-    "ece":0.0039837348,
+    "method":"uncalibrated",
+    "log_loss":1.3250579349,
+    "brier_multiclass":0.6971003266,
+    "ece":0.0283830965,
+    "f1_macro_default":0.3382723277,
+    "accuracy_default":0.3913744891,
+    "balanced_accuracy_default":0.350253107,
+    "validation_log_loss":1.3286969208,
+    "tuned_f1_macro_validation":0.3383188505,
+    "tuned_f1_macro":0.345668906,
+    "tuned_f1_macro_test":0.345668906,
+    "tuned_accuracy_test":0.3925575393,
+    "tuned_balanced_accuracy_test":0.3500252261,
+    "worsened_log_loss":false,
+    "multipliers":[
+      0.8,
+      1.1,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  {
     "method":"sigmoid",
-    "tuned_f1_macro":0.2657172053,
+    "log_loss":1.2828670713,
+    "brier_multiclass":0.6769464337,
+    "ece":0.0046754029,
+    "f1_macro_default":0.2873225305,
+    "accuracy_default":0.4237470424,
+    "balanced_accuracy_default":0.2831384919,
+    "validation_log_loss":1.2871615843,
+    "tuned_f1_macro_validation":0.3304498973,
+    "tuned_f1_macro":0.3350614803,
+    "tuned_f1_macro_test":0.3350614803,
+    "tuned_accuracy_test":0.3954613895,
+    "tuned_balanced_accuracy_test":0.3354430705,
+    "worsened_log_loss":false,
     "multipliers":[
       1.5,
       1.5,
-      1.2,
-      0.9,
+      1.0,
+      0.8,
       1.5
     ]
   },
   {
-    "log_loss":1.3133372173,
-    "brier_multiclass":0.6852717036,
-    "ece":0.0042672543,
     "method":"isotonic",
-    "tuned_f1_macro":0.2751002964,
+    "log_loss":1.2773371218,
+    "brier_multiclass":0.6758973164,
+    "ece":0.0071388219,
+    "f1_macro_default":0.2695898337,
+    "accuracy_default":0.4236394924,
+    "balanced_accuracy_default":0.2717179002,
+    "validation_log_loss":1.2689617829,
+    "tuned_f1_macro_validation":0.3360985381,
+    "tuned_f1_macro":0.3316349986,
+    "tuned_f1_macro_test":0.3316349986,
+    "tuned_accuracy_test":0.4006237901,
+    "tuned_balanced_accuracy_test":0.3240033952,
+    "worsened_log_loss":false,
     "multipliers":[
       1.5,
       1.5,
-      1.1,
-      0.7,
-      1.5
+      1.0,
+      0.9,
+      1.4
     ]
   }
 ]

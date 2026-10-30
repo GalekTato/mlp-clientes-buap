@@ -1,101 +1,101 @@
 {
-  "N": 881034,
+  "N": 940000,
   "z": 2.576,
   "error": 0.005,
-  "cochran_fpc": 61710,
+  "cochran_fpc": 61983,
   "allocated_by_class": {
-    "Inactivo": 20074,
-    "Alto_valor": 4178,
-    "Promocional": 5639,
-    "Frecuente": 7634,
-    "Ocasional": 24187
+    "Inactivo": 20146,
+    "Alto_valor": 4200,
+    "Promocional": 5672,
+    "Frecuente": 7681,
+    "Ocasional": 24286
   },
-  "allocated_total": 61712,
-  "actual_sample_size": 61712,
+  "allocated_total": 61985,
+  "actual_sample_size": 61985,
   "tests": {
     "Inactivo": {
-      "chi2_pvalue": 0.9972710033503506
+      "chi2_pvalue": 0.9998784774234699
     },
     "Alto_valor": {
-      "chi2_pvalue": 0.995168547951802
+      "chi2_pvalue": 0.9984621718291834
     },
     "Promocional": {
-      "chi2_pvalue": 0.994649550479967
+      "chi2_pvalue": 0.9965925182947649
     },
     "Frecuente": {
-      "chi2_pvalue": 0.9999135015619001
+      "chi2_pvalue": 0.9981092959095443
     },
     "Ocasional": {
-      "chi2_pvalue": 0.9967678658786171
+      "chi2_pvalue": 0.9983552404865967
     },
     "ks_edad": {
-      "ks_pvalue": 0.13285867180021405
+      "ks_pvalue": 0.7440089853504671
     },
     "ks_antiguedad_dias": {
-      "ks_pvalue": 0.5901527390430723
+      "ks_pvalue": 0.8499999252448948
     },
     "ks_compras_365d": {
-      "ks_pvalue": 0.552368956211863
+      "ks_pvalue": 0.3761379283704466
     },
     "ks_dias_ultima_compra": {
-      "ks_pvalue": 0.5842650791574038
+      "ks_pvalue": 0.4968255584637413
     },
     "ks_ticket_promedio_mxn": {
-      "ks_pvalue": 0.2479450835968856
+      "ks_pvalue": 0.9355515393836682
     },
     "ks_gasto_total_365d_mxn": {
-      "ks_pvalue": 0.030722147694875246
+      "ks_pvalue": 0.8616760891322264
     },
     "ks_unidades_365d": {
-      "ks_pvalue": 0.5724234202036718
+      "ks_pvalue": 0.21010021710001647
     },
     "ks_categorias_compradas_365d": {
-      "ks_pvalue": 0.9996829145399149
+      "ks_pvalue": 0.9797368421243713
     },
     "ks_sesiones_365d": {
-      "ks_pvalue": 0.33894522291928886
+      "ks_pvalue": 0.17966830703519587
     },
     "ks_paginas_por_sesion": {
-      "ks_pvalue": 0.9342197164675953
+      "ks_pvalue": 0.07535766482888528
     },
     "ks_duracion_sesion_min": {
-      "ks_pvalue": 0.8558441084254577
+      "ks_pvalue": 0.951108880072018
     },
     "ks_carritos_abandonados_365d": {
-      "ks_pvalue": 0.9999372161059522
+      "ks_pvalue": 0.5024056287755406
     },
     "ks_compras_con_descuento_365d": {
-      "ks_pvalue": 0.37436967103434793
+      "ks_pvalue": 0.36159480763316443
     },
     "ks_descuento_promedio_pct": {
-      "ks_pvalue": 0.9987639997445722
+      "ks_pvalue": 0.942270651943164
     },
     "ks_emails_enviados_365d": {
-      "ks_pvalue": 0.6899274995213842
+      "ks_pvalue": 0.0813324105536678
     },
     "ks_clics_anuncios_365d": {
-      "ks_pvalue": 0.997886793419661
+      "ks_pvalue": 0.999999916833634
     },
     "ks_puntos_lealtad": {
-      "ks_pvalue": 0.24389839635938093
+      "ks_pvalue": 0.43623951054816956
     },
     "ks_miembro_lealtad": {
-      "ks_pvalue": 0.6008931719080833
+      "ks_pvalue": 0.9999999349329398
     },
     "ks_devoluciones_365d": {
-      "ks_pvalue": 0.9999466896869148
+      "ks_pvalue": 0.533892742449043
     },
     "ks_reclamos_365d": {
-      "ks_pvalue": 0.9999912342738916
+      "ks_pvalue": 0.9999999999982041
     },
     "ks_entrega_promedio_dias": {
-      "ks_pvalue": 0.6443962133692958
+      "ks_pvalue": 0.7512293215318473
     },
     "ks_satisfaccion_promedio": {
-      "ks_pvalue": 0.9680903297104615
+      "ks_pvalue": 0.9503820658212475
     },
     "ks_emails_abiertos_365d": {
-      "ks_pvalue": 0.989492739690406
+      "ks_pvalue": 0.05253790741148123
     }
   }
 }

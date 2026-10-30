@@ -16,7 +16,7 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Compile source
         shell: bash
-        run: python -m py_compile preprocesameinto.py preprocesamiento.py muestreo.py crossVal.py entrenamiento.py main.py empaquetar_entrega.py src/*.py
+        run: python -m py_compile preprocesamiento.py muestreo.py crossVal.py entrenamiento.py modelos_referencia.py main.py empaquetar_entrega.py proyecto_utils.py src/*.py
       - name: Verify large dataset is not tracked
         shell: bash
         run: |
