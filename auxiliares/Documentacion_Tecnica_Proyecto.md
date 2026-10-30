@@ -20,7 +20,7 @@ De acuerdo con el documento de especificación técnica del dataset, la etiqueta
 
 La asignación sigue un **orden estricto de prioridad excluyente** (si un cliente cumple la Prioridad 1 se asigna a ella; si no, se evalúa la Prioridad 2, y así sucesivamente):
 
-| Prioridad | Clase (`clase_cliente`) | Proporción limpia (`N = 940,000`) | Regla de asignación en los 90 días futuros |Significado comercial |
+| Prioridad | Clase (`clase_cliente`) | Proporción limpia (`N = 940,000`) | Regla de asignación en los 90 días futuros | Significado comercial |
 |:---:|---|---:|---|---|
 | **1** | `Inactivo` | `32.5014%` (`305,513`) | $N = 0$ | Clientes que no realizan ninguna compra en el trimestre siguiente. |
 | **2** | `Alto_valor` | `6.7756%` (`63,691`) | $N \ge 1$ y ($G \ge \$14,000$ o [$G \ge \$10,500$ y $N \ge 7$]) | Clientes de mayor facturación trimestral; segmento crítico de retención VIP. |
@@ -170,6 +170,18 @@ Con $k^* = 5$ y $\gamma^* = 0.50$, se ejecutó `GridSearchCV` sobre **`472` comb
 - **Épocas (`max_iter`):** `150`, deteniéndose por **parada temprana (`early_stopping=True`) en la época `29`**.
 - **Puntaje en validación cruzada (5 folds):** **`F1-Macro = 0.3349 ± 0.0029`** (`IC 95%: [0.3313, 0.3385]`).
 
+#### 5.3 Diferencia y sinergia entre `Priors` ($\gamma^*$ / multiplicadores) y `Momentum` ($\mu = 0.95$, Nesterov)
+En el proyecto se utilizan **ambos mecanismos simultáneamente** porque resuelven dos problemas distintos y complementarios:
+
+| Aspecto | **`Momentum` ($\mu = 0.95$ con Nesterov)** | **`Priors` / Ponderación por Clase ($\gamma^* = 0.50$) y Multiplicadores** |
+|---|---|---|
+| **¿Qué es?** | Hiperparámetro del optimizador (`SGD`) que acumula una media móvil exponencial de los gradientes pasados al actualizar los pesos $W$. | Modificación de la importancia a priori de cada clase en la pérdida ($w_c = (N/(K N_c))^{\gamma}$) o en el umbral de decisión ($\hat{p}_c \cdot m_c$). |
+| **¿Dónde actúa?** | En **cómo se desplaza la red sobre la superficie de pérdida** lote tras lote durante el entrenamiento. | En **la forma de la superficie de pérdida y la posición de las fronteras de decisión** entre clases mayoritarias y minoritarias. |
+| **Ecuación** | $\mathbf{v}_t = \mu \mathbf{v}_{t-1} - \eta \nabla \mathcal{L}(\Theta_t + \mu \mathbf{v}_{t-1})$ | $\mathcal{L}_\gamma = -\sum_i w_{y_i}(\gamma) \log \hat{p}_{i, y_i}$ y $\hat{y} = \arg\max_c (m_c \cdot \hat{p}_c)$ |
+| **Efecto en este dataset** | En cada minilote de `256` filas caen solo ~`17` casos de `Alto_valor` con peso alto ($w_{\text{Alto\_valor}} \approx 1.72$ vs. $w_{\text{Ocasional}} \approx 0.71$), lo que hace que el gradiente oscile entre minilotes. El `momentum = 0.95` promedia el 95% de la dirección acumulada y **amortigua esas oscilaciones**, logrando converger en la época `29`. | Sin ajustar *priors* ($\gamma = 0.00$), el modelo apuesta por `Ocasional`/`Inactivo` (`Accuracy = 42.27%`, pero `F1-Macro = 0.2782` y `Recall Frecuente = 6.84%`). Con $\gamma^* = 0.50$ y multiplicadores en validación, el `F1-Macro` sube a **`0.3383`** (`0.3457` post-hoc). |
+
+En síntesis: **$\gamma^* = 0.50$ corrige el sesgo de los *priors* hacia las clases mayoritarias, y `momentum = 0.95` estabiliza la trayectoria del gradiente mientras la red aprende con esos pesos.**
+
 ---
 
 ## 3. Justificación Detallada de la Precisión (~39.1% / ~42.3%) y Guía para Interpretar los Resultados
@@ -258,7 +270,9 @@ $$1,000,000\text{ filas crudas} = 60,000\text{ eliminadas por limpieza} + 43,389
 
 ---
 
-## 5. Guía de Lectura de las 11 Gráficas del Proyecto (`graficas/01` a `11`)
+## 5. Guía de Lectura de las 12 Gráficas del Proyecto (`graficas/01` a `12`)
+
+![Arquitectura del Programa y del Perceptrón Multicapa](../graficas/12_arquitectura_programa_y_perceptron.png)
 
 | Archivo en `graficas/` | Qué visualiza y cómo interpretarla |
 |---|---|
@@ -273,6 +287,7 @@ $$1,000,000\text{ filas crudas} = 60,000\text{ eliminadas por limpieza} + 43,389
 | `09_curvas_roc_pr_multiclase.png` | **Izquierda:** curvas ROC One-vs-Rest por clase en `test` (destacando `Alto_valor` con `AUC = 0.802` y `Promocional` con `AUC = 0.741`). **Derecha:** curvas Precision–Recall por clase. |
 | `10_auc_area_multiclase.png` | Gráfico de barras agrupadas que resume `ROC-AUC` y `PR-AUC` para las cinco clases en `test.csv`. |
 | `11_barrido_gamma.png` | Curva de selección de $\gamma^* = 0.50$ en validación cruzada con la banda de error estándar y el umbral horizontal de la regla 1-SE (`0.3247`). |
+| `12_arquitectura_programa_y_perceptron.png` | **Panel A:** Flujo modular completo del programa (`preprocesamiento.py` $\rightarrow$ `muestreo.py` $\rightarrow$ `crossVal.py` $\rightarrow$ `entrenamiento.py` $\rightarrow$ `calibration.py` / `evaluation_large.py`) garantizando cero fuga de información. **Panel B:** Arquitectura interna del Perceptrón Multicapa ganador (`55` entradas tras `DomainFeatureTransformer` y `ColumnTransformer` $\rightarrow$ `128` neuronas `tanh` $\rightarrow$ `64` neuronas `tanh` $\rightarrow$ `5` neuronas `Softmax`, sumando `15,749` parámetros entrenables con `SGD` + Nesterov $\mu = 0.95$ y $\gamma^* = 0.50$). |
 
 ---
 
