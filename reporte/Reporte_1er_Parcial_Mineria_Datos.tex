@@ -45,11 +45,16 @@
 
 \setlength{\headheight}{15pt}
 \setlength{\emergencystretch}{3em}
+\tolerance=2000
+\hbadness=10000
+\vfuzz=10pt
+\hfuzz=1pt
+\captionsetup{font=small,labelfont=bf,justification=raggedright,singlelinecheck=true}
 \newcommand{\code}[1]{\texttt{\small #1}}
 \newcommand{\fig}[3]{
     \begin{figure}[H]
         \centering
-        \includegraphics[width=#2\linewidth]{../graficas/#1}
+        \includegraphics[width=#2\linewidth,height=0.37\textheight,keepaspectratio]{../graficas/#1}
         \caption{#3}
     \end{figure}
 }
@@ -98,15 +103,15 @@
 
 \vspace*{0.3cm}
 \begin{center}
-    \begin{tabular}{m{0.20\textwidth} >{\centering\arraybackslash}m{0.54\textwidth} m{0.20\textwidth}}
-        \centering \includegraphics[width=3.1cm]{logo-buap.png} &
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} m{0.20\textwidth} >{\centering\arraybackslash}m{0.52\textwidth} m{0.20\textwidth} @{}}
+        \centering \includegraphics[width=3.0cm]{logo-buap.png} &
         {\Large\bfseries\textcolor{buapnavy}{BENEMÉRITA UNIVERSIDAD AUTÓNOMA DE PUEBLA}\par}
         \vspace{0.2cm}
         {\large\bfseries\textcolor{fccblue}{FACULTAD DE CIENCIAS DE LA COMPUTACIÓN}\par}
         \vspace{0.15cm}
-        {\normalsize\textcolor{buapgray}{Licenciatura en Ciencias de la Computación}\par} &
-        \centering \includegraphics[width=2.8cm]{fcc_logo.png}
-    \end{tabular}
+        {\normalsize\textcolor{buapgray}{Ingeniería en Ciencias de la Computación}\par} &
+        \centering \includegraphics[width=2.7cm]{fcc_logo.png}
+    \end{tabular*}
 \end{center}
 
 \vspace{1.0cm}
@@ -124,11 +129,10 @@
     bottom=6mm
 ]
     \centering
-    {\LARGE\bfseries\textcolor{buapnavy}{Preprocesamiento, Muestreo de Cochran, Validación Cruzada y Optimización de un Perceptrón Multicapa (MLP) para Clasificación Multiclase de Clientes}\par}
+    {\LARGE\bfseries\textcolor{buapnavy}{1er Exámen Parcial}\par}
     \vspace{0.4cm}
-    {\large\bfseries\textcolor{fccblue}{Reporte Técnico en Formato Pregunta--Respuesta}\par}
+    {\large\bfseries\textcolor{fccblue}{Reporte Técnico}\par}
     \vspace{0.2cm}
-    {\normalsize\textcolor{buapgray}{Primer Examen Parcial --- Minería de Datos}\par}
 \end{tcolorbox}
 \end{center}
 
@@ -158,7 +162,7 @@
 
 \vfill
 \begin{center}
-    {\small\textcolor{buapgray}{Puebla de Zaragoza, Pue. --- Ejecución íntegra y verificable con semilla fija (\code{SEED = 42})}}
+    {\small\textcolor{buapgray}{Puebla de Zaragoza, Pue.}}
 \end{center}
 \end{titlepage}
 
@@ -172,7 +176,7 @@
 % =============================================================================
 \section{Introducción}
 
-El presente proyecto aborda el problema de clasificación supervisada multiclase sobre una base de datos de comercio electrónico compuesta por $1{,}000{,}000$ de registros y $31$ atributos (\code{clientes\_comercio\_1000000\_alumnos (1).csv}). Cada fila resume la actividad transaccional, navegacional, promocional y de posventa de un cliente durante los $365$ días previos a la fecha de corte ($30$ de junio de $2026$), e incluye la variable objetivo \code{clase\_cliente}, la cual clasifica el comportamiento del consumidor durante los \textbf{90 días posteriores al corte} ($1$ de julio al $28$ de septiembre de $2026$).
+El presente proyecto aborda el problema de clasificación supervisada multiclase sobre una base de datos de comercio electrónico compuesta por $1{,}000{,}000$ de registros y $31$ atributos. Cada fila resume la actividad transaccional, navegacional, promocional y de posventa de un cliente durante los $365$ días previos a la fecha de corte ($30$ de junio de $2026$), e incluye la variable objetivo \code{clase\_cliente}, la cual clasifica el comportamiento del consumidor durante los \textbf{90 días posteriores al corte} ($1$ de julio al $28$ de septiembre de $2026$).
 
 De acuerdo con la especificación técnica del dominio comercial, la etiqueta futura se asigna mediante una estructura jerárquica de cinco prioridades excluyentes basada en las compras futuras ($N$), compras futuras con descuento ($D$) y gasto futuro ($G$) dentro de la ventana prospectiva de $90$ días:
 \begin{enumerate}[noitemsep]
@@ -184,7 +188,7 @@ De acuerdo con la especificación técnica del dominio comercial, la etiqueta fu
 \end{enumerate}
 
 \subsection{Naturaleza Estocástica de la Etiqueta y Techo de Predictibilidad}
-Un aspecto metodológico fundamental de este problema es que las cantidades prospectivas $(N, D, G)$ de los 90 días posteriores al corte \textbf{no forman parte de las variables de entrada}; el clasificador únicamente observa el resumen histórico de 365 días. Dado que la ocurrencia exacta de compras en un trimestre futuro contiene variabilidad aleatoria intrínseca (por ejemplo, clientes con historiales similares que realizan $0$ o $1$ compra en el trimestre siguiente, cruzando la frontera entre \code{Inactivo} y \code{Ocasional}), existe una tasa de error irreducible de Bayes ($\varepsilon_{\text{Bayes}} > 0$) distinta de cero. En consecuencia, el diseño del sistema se enfoca en:
+Un aspecto metodológico fundamental de este problema es que las cantidades prospectivas $(N, D, G)$ de los 90 días posteriores al corte \textbf{no forman parte de las variables de entrada}; el clasificador únicamente observa el resumen histórico de 365 días. Dado que la ocurrencia exacta de compras en un trimestre futuro contiene variabilidad aleatoria (por ejemplo, clientes con historiales similares que realizan $0$ o $1$ compra en el trimestre siguiente, cruzando la frontera entre \code{Inactivo} y \code{Ocasional}), existe una tasa de error irreducible de Bayes ($\varepsilon_{\text{Bayes}} > 0$) distinta de cero. En consecuencia, el diseño del sistema se enfoca en:
 \begin{itemize}[noitemsep]
     \item Rescatar de forma determinista todos los registros reparables durante el preprocesamiento sin introducir sesgos de imputación artificial.
     \item Preservar rigurosamente la estructura poblacional mediante muestreo de Cochran con corrección por población finita y particionado estratificado sin fuga de información (\textit{data leakage}).
@@ -194,9 +198,9 @@ Un aspecto metodológico fundamental de este problema es que las cantidades pros
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=6mm and 7mm,
+    node distance=6mm and 4.5mm,
     every node/.style={font=\small},
-    box/.style={draw=buapnavy, thick, rounded corners=2mm, fill=white, minimum height=10mm, text width=3.2cm, align=center},
+    box/.style={draw=buapnavy, thick, rounded corners=2mm, fill=white, minimum height=10mm, text width=3.55cm, align=center},
     arrow/.style={-{Latex[length=2.5mm]}, very thick, color=fccblue}
 ]
     \node[box, fill=buaplight] (raw) {\textbf{1. Datos Crudos}\\$1{,}000{,}000 \times 31$\\Auditoría de calidad};
@@ -217,7 +221,7 @@ Un aspecto metodológico fundamental de este problema es que las cantidades pros
 % =============================================================================
 % 2. DESARROLLO EN FORMATO PREGUNTA - RESPUESTA
 % =============================================================================
-\section{Desarrollo (Formato Pregunta--Respuesta)}
+\section{Desarrollo}
 
 % -----------------------------------------------------------------------------
 % PREGUNTA 1
@@ -233,7 +237,7 @@ Un aspecto metodológico fundamental de este problema es que las cantidades pros
 El módulo \code{preprocesamiento.py} implementa un flujo de auditoría y limpieza determinista en dos etapas claramente diferenciadas: (1) \textbf{normalización y rescate de registros reparables}, y (2) \textbf{filtrado por reglas de integridad de dominio} con atribución por causa excluyente. Esta separación evita descartar observaciones cuya aparente invalidez proviene únicamente de variaciones de formato léxico o monetario.
 
 \paragraph{1. Diagnóstico estructural del archivo crudo ($1{,}000{,}000$ de filas).}
-La inspección exhaustiva del archivo \code{clientes\_comercio\_1000000\_alumnos (1).csv} identificó exactamente cuatro bloques disjuntos de $30{,}000$ registros cada uno con anomalías inyectadas, además de $0$ duplicados exactos, $0$ identificadores \code{id\_cliente} repetidos y $0$ violaciones de precedencia lógica:
+La inspección del archivo \code{clientes\_comercio\_1000000\_alumnos.csv} identificó exactamente cuatro bloques disjuntos de $30{,}000$ registros cada uno con anomalías inyectadas, además de $0$ duplicados exactos, $0$ identificadores \code{id\_cliente} repetidos y $0$ violaciones de precedencia lógica:
 \begin{itemize}[noitemsep]
     \item \textbf{Bloque A (Formato monetario y variantes léxicas categóricas --- $30{,}000$ filas reparables):}
     \begin{itemize}[noitemsep]
@@ -255,8 +259,9 @@ La inspección exhaustiva del archivo \code{clientes\_comercio\_1000000\_alumnos
 \begin{table}[H]
 \centering
 \caption{Contabilidad exacta del preprocesamiento en \code{preprocesamiento.py} (fuente: \code{auditoria\_preprocesamiento.json}).}
-\small
-\begin{tabular}{lrrp{6.8cm}}
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabularx}{\textwidth}{lrr >{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Concepto / Regla de Auditoría} & \textbf{Filas} & \textbf{\% Base} & \textbf{Acción Técnica y Justificación} \\
 \midrule
@@ -277,7 +282,7 @@ Recálculo exacto de \code{gasto\_total\_365d\_mxn} & $30{,}000$ & $3.00\%$ & $\
 \midrule
 \textbf{Registros limpios conservados (\code{output\_rows})} & $\mathbf{940{,}000}$ & $\mathbf{94.00\%}$ & Exportados en \code{datos/dataset\_limpio.csv}. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \paragraph{2. Tratamiento de valores extremos (Outliers IQR) y correlaciones.}
@@ -312,8 +317,9 @@ Al aplicar afijación proporcional con redondeo hacia arriba por estrato ($n_c =
 \begin{table}[H]
 \centering
 \caption{Conservación exacta de proporciones por clase entre la población limpia y las particiones estratificadas (fuente: \code{distribucion\_particiones.csv} y \code{calculo\_muestra.json}).}
-\small
-\begin{tabular}{lrrrrrrr}
+\footnotesize
+\setlength{\tabcolsep}{0pt}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} lrrrrrrr @{}}
 \toprule
 \textbf{Clase} & \textbf{Población ($N$)} & \textbf{Prop. (\%)} & \textbf{Muestra Cochran} & \textbf{Train (70\%)} & \textbf{Val (15\%)} & \textbf{Test (15\%)} & \textbf{$p$-valor $\chi^2$} \\
 \midrule
@@ -325,7 +331,7 @@ Al aplicar afijación proporcional con redondeo hacia arriba por estrato ($n_c =
 \midrule
 \textbf{Total}     & $\mathbf{940{,}000}$ & $\mathbf{100.0000\%}$ & $\mathbf{61{,}985}$ & $\mathbf{43{,}389}$ & $\mathbf{9{,}298}$ & $\mathbf{9{,}298}$ & --- \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \end{table}
 
 \paragraph{2. Verificación estadística de representatividad.}
@@ -353,16 +359,17 @@ En problemas multiclase desbalanceados, elegir un valor de $k$ excesivamente gra
 \begin{table}[H]
 \centering
 \caption{Evaluación experimental de $k \in \{3, 5, 10\}$ con el pipeline MLP base sobre \code{train.csv} (fuente: \code{reporte\_crossval.csv} y \code{reporte\_crossval.json}).}
-\small
-\begin{tabular}{rrrrrrrl}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabularx}{\textwidth}{rrrrrrr >{\raggedright\arraybackslash}X}
 \toprule
-$\mathbf{k}$ & \textbf{\code{Alto\_valor} / fold} & \textbf{Cumple $\ge 500$} & \textbf{F1-Macro medio} & \textbf{Desv. Est. (DE)} & \textbf{Error Est. (SE)} & \textbf{Bal. Acc. media} & \textbf{Decisión} \\
+$\mathbf{k}$ & \textbf{\code{Alto\_valor}/fold} & \textbf{$\ge 500$} & \textbf{F1-Macro} & \textbf{DE} & \textbf{SE} & \textbf{Bal. Acc.} & \textbf{Decisión} \\
 \midrule
 $3$  & $980$ & Sí & $0.2740$ & $0.0054$ & $0.0031$ & $0.2701$ & Factible (menor \% de datos de ajuste: $66.7\%$) \\
 $\mathbf{5}$  & $\mathbf{588}$ & \textbf{Sí} & $\mathbf{0.2675}$ & $\mathbf{0.0143}$ & $\mathbf{0.0064}$ & $\mathbf{0.2661}$ & \textbf{Seleccionado ($k^* = 5$, $80\%$ datos por fit)} \\
-$10$ & $294$ & No ($< 500$) & $0.2732$ & $0.0098$ & $0.0031$ & $0.2705$ & Descartado por soporte insuficiente ($294 < 500$) \\
+$10$ & $294$ & No & $0.2732$ & $0.0098$ & $0.0031$ & $0.2705$ & Descartado por soporte insuficiente ($294 < 500$) \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 Como muestra la Tabla 3, para $k = 10$ el soporte de \code{Alto\_valor} cae a $294$ registros por pliegue (incumpliendo el umbral de $500$ casos y duplicando el número de ajustes de la rejilla de $2{,}360$ a $4{,}720$). Entre los valores factibles ($k = 3$ con $980$ casos y $k = 5$ con $588$ casos), la regla selecciona $\mathbf{k^* = 5}$, ya que preserva $588 \ge 500$ clientes de \code{Alto\_valor} en cada pliegue de evaluación y destina el $80\%$ del conjunto de entrenamiento ($34{,}711$ registros) al ajuste de los pesos sinápticos en cada partición.
@@ -395,17 +402,18 @@ Antes de ejecutar la rejilla principal, la función \code{sweep\_gamma} evaluó 
 \begin{table}[H]
 \centering
 \caption{Barrido del exponente de balanceo $\gamma$ en validación cruzada de 5 pliegues sobre \code{train.csv} (fuente: \code{barrido\_gamma.csv}).}
-\small
-\begin{tabular}{rrrrrrl}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{rrrrrr >{\raggedright\arraybackslash}X}
 \toprule
-$\boldsymbol{\gamma}$ & \textbf{F1-Macro medio} & \textbf{DE (F1)} & \textbf{Error Est. (SE)} & \textbf{Bal. Acc. media} & \textbf{Accuracy media} & \textbf{Criterio 1-SE ($\ge 0.3247$)} \\
+$\boldsymbol{\gamma}$ & \textbf{F1-Macro} & \textbf{DE (F1)} & \textbf{SE} & \textbf{Bal. Acc.} & \textbf{Accuracy} & \textbf{Criterio 1-SE ($\ge 0.3247$)} \\
 \midrule
 $0.00$ & $0.2782$ & $0.0099$ & $0.0044$ & $0.2757$ & $0.4227$ & No cumple (sesgo hacia mayoritarias) \\
 $0.25$ & $0.3204$ & $0.0085$ & $0.0038$ & $0.3143$ & $0.4158$ & No cumple ($0.3204 < 0.3247$) \\
 $\mathbf{0.50}$ & $\mathbf{0.3249}$ & $\mathbf{0.0038}$ & $\mathbf{0.0017}$ & $\mathbf{0.3372}$ & $\mathbf{0.3914}$ & \textbf{Seleccionado ($\gamma^* = 0.50$, menor varianza)} \\
 $0.75$ & $0.3261$ & $0.0032$ & $0.0014$ & $0.3529$ & $0.3638$ & Máximo nominal (umbral $= 0.3261 - 0.0014 = 0.3247$) \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 El máximo nominal ocurre en $\gamma = 0.75$ ($\text{F1-Macro} = 0.3261 \pm 0.0014$), fijando el umbral $1\text{-SE}$ en $0.3261 - 0.0014 = 0.3247$. El valor $\boldsymbol{\gamma^* = 0.50}$ supera dicho umbral ($0.3249 \ge 0.3247$) al tiempo que conserva $2.76$ puntos porcentuales adicionales de exactitud global ($0.3914$ frente a $0.3638$), evitando sobreponderar agresivamente el ruido en la frontera de las clases minoritarias.
@@ -416,10 +424,11 @@ El transformador sin fuga \code{DomainFeatureTransformer} incorpora $8$ razones 
 \begin{table}[H]
 \centering
 \caption{Top 8 variables originales según importancia por permutación sobre \code{validation.csv} ($n_{\text{repeats}}=10$, fuente: \code{importancia\_permutacion.csv}).}
-\small
-\begin{tabular}{clrrl}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{clrr >{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Rango} & \textbf{Variable Original de Entrada} & \textbf{Caída media en F1-Macro} & \textbf{Desv. Est.} & \textbf{Interpretación de Negocio} \\
+\textbf{Rango} & \textbf{Variable Original de Entrada} & \textbf{Caída F1-Macro} & \textbf{DE} & \textbf{Interpretación de Negocio} \\
 \midrule
 1 & \code{sesiones\_365d} & $+0.0389$ & $0.0034$ & Intensidad de actividad digital y recurrencia de visitas. \\
 2 & \code{descuento\_promedio\_pct} & $+0.0345$ & $0.0025$ & Sensibilidad histórica a rebajas (separa \code{Promocional} de \code{Frecuente}). \\
@@ -430,23 +439,22 @@ El transformador sin fuga \code{DomainFeatureTransformer} incorpora $8$ razones 
 7 & \code{compras\_con\_descuento\_365d} & $+0.0013$ & $0.0013$ & Numerador de la proporción histórica de compras con promoción. \\
 8 & \code{gasto\_total\_365d\_mxn} & $+0.0013$ & $0.0013$ & Desembolso acumulado en los 365 días previos. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \paragraph{4. Espacio de búsqueda en rejilla (472 combinaciones) y configuración ganadora.}
 La búsqueda exhaustiva se ejecutó con \code{GridSearchCV} ($k^* = 5$, \code{refit="f1\_macro"}, paralelismo \code{loky} y caché de preprocesamiento \code{joblib.Memory}) sobre dos subespacios complementarios que totalizan $\mathbf{472}$ \textbf{combinaciones de hiperparámetros} ($2{,}360$ entrenamientos completos, con $\mathbf{0}$ \textbf{combinaciones fallidas}):
-\begin{itemize}[noitemsep]
-    \item \textbf{Subespacio 1 --- Optimizador adaptativo \code{adam} ($216$ combinaciones):}
-    \code{hidden\_layer\_sizes} $\in \{(64,), (128, 64), (128, 64, 32)\}$ ($1$, $2$ y $3$ capas ocultas), \code{max\_iter} $\in \{150, 300\}$, \code{learning\_rate\_init} $\in \{0.0005, 0.001, 0.005\}$, \code{activation} $\in \{\text{\code{relu}}, \text{\code{tanh}}\}$, \code{alpha} $\in \{10^{-4}, 10^{-3}, 10^{-2}\}$ y \code{batch\_size} $\in \{256, 512\}$.
-    \item \textbf{Subespacio 2 --- Descenso estocástico \code{sgd} con \code{momentum} y Nesterov ($256$ combinaciones):}
-    \code{hidden\_layer\_sizes} $\in \{(64,), (128, 64)\}$, \code{max\_iter} $\in \{150, 300\}$, \code{learning\_rate\_init} $\in \{0.001, 0.005\}$, \code{learning\_rate} $\in \{\text{\code{constant}}, \text{\code{adaptive}}\}$, \code{momentum} $\in \{0.90, 0.95\}$, \code{nesterovs\_momentum} $= \text{\code{True}}$, \code{activation} $\in \{\text{\code{relu}}, \text{\code{tanh}}\}$, \code{alpha} $\in \{10^{-4}, 10^{-3}\}$ y \code{batch\_size} $\in \{256, 512\}$.
+\begin{itemize}[noitemsep,leftmargin=1.5em]
+    \item \textbf{Subespacio 1 --- Optimizador adaptativo \code{adam} ($216$ combinaciones):} capas ocultas (\code{hidden\_layer\_sizes}) $\in \{(64,), (128, 64), (128, 64, 32)\}$ ($1$, $2$ y $3$ capas), épocas máximas (\code{max\_iter}) $\in \{150, 300\}$, tasa inicial (\code{learning\_rate\_init}) $\in \{0.0005, 0.001, 0.005\}$, activación (\code{activation}) $\in \{\text{\code{relu}}, \text{\code{tanh}}\}$, regularización (\code{alpha}) $\in \{10^{-4}, 10^{-3}, 10^{-2}\}$ y tamaño de lote (\code{batch\_size}) $\in \{256, 512\}$.
+    \item \textbf{Subespacio 2 --- Descenso estocástico \code{sgd} con \code{momentum} y Nesterov ($256$ combinaciones):} capas ocultas (\code{hidden\_layer\_sizes}) $\in \{(64,), (128, 64)\}$, épocas máximas (\code{max\_iter}) $\in \{150, 300\}$, tasa inicial (\code{learning\_rate\_init}) $\in \{0.001, 0.005\}$, esquema (\code{learning\_rate}) $\in \{\text{\code{constant}}, \text{\code{adaptive}}\}$, momento (\code{momentum}) $\in \{0.90, 0.95\}$, aceleración Nesterov (\code{nesterovs\_momentum}) $= \text{\code{True}}$, activación (\code{activation}) $\in \{\text{\code{relu}}, \text{\code{tanh}}\}$, regularización (\code{alpha}) $\in \{10^{-4}, 10^{-3}\}$ y lote (\code{batch\_size}) $\in \{256, 512\}$.
 \end{itemize}
 
 \begin{table}[H]
 \centering
 \caption{Hiperparámetros óptimos seleccionados por \code{GridSearchCV} sobre las 472 combinaciones evaluadas (fuente: \code{mejor\_modelo.json}).}
-\small
-\begin{tabular}{llp{7.4cm}}
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabularx}{\textwidth}{ll >{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Hiperparámetro del MLP} & \textbf{Valor Óptimo} & \textbf{Efecto Técnico en el Aprendizaje} \\
 \midrule
@@ -461,7 +469,7 @@ Tamaño de minilote (\code{batch\_size}) & $256$ & Garantiza presencia promedio 
 Exponente de balanceo ($\gamma^*$) & $0.50$ & Raíz cuadrada de la frecuencia inversa por clase. \\
 \textbf{Desempeño medio CV (5 folds)} & $\mathbf{0.3349 \pm 0.0029}$ & \textbf{Mejor \code{F1-Macro} en validación cruzada ($\text{IC } 95\%: [0.3313, 0.3385]$).} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 % -----------------------------------------------------------------------------
@@ -494,10 +502,11 @@ Por esta razón, el proyecto adopta un conjunto multidimensional de métricas co
 \begin{table}[H]
 \centering
 \caption{Desempeño desglosado por clase del MLP ganador sobre el conjunto de prueba \code{test.csv} ($9{,}298$ registros, fuente: \code{reporte\_clasificacion\_test.csv} y \code{auc\_por\_clase.csv}).}
-\small
-\begin{tabular}{lrrrrrr}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X rrrrrr}
 \toprule
-\textbf{Clase de Cliente} & \textbf{Soporte en Test} & \textbf{Precisión} & \textbf{Sensibilidad (Recall)} & \textbf{F1-Score} & \textbf{ROC-AUC (OvR)} & \textbf{PR-AUC} \\
+\textbf{Clase de Cliente} & \textbf{Soporte en Test} & \textbf{Precisión} & \textbf{Sensibilidad} & \textbf{F1-Score} & \textbf{ROC-AUC} & \textbf{PR-AUC} \\
 \midrule
 \code{Alto\_valor} &   $630$ ($6.78\%$)  & $0.3249$ & $0.2460$ & $0.2800$ & $\mathbf{0.8021}$ & $0.2461$ \\
 \code{Promocional} &   $851$ ($9.15\%$)  & $0.2528$ & $0.4277$ & $0.3178$ & $\mathbf{0.7412}$ & $0.2145$ \\
@@ -508,7 +517,7 @@ Por esta razón, el proyecto adopta un conjunto multidimensional de métricas co
 \textbf{Promedio Macro} & $9{,}298$ ($100.0\%$) & $\mathbf{0.3339}$ & $\mathbf{0.3503}$ & $\mathbf{0.3383}$ & $\mathbf{0.6901}$ & $\mathbf{0.3112}$ \\
 \textbf{Promedio Ponderado} & $9{,}298$ ($100.0\%$) & $\mathbf{0.3769}$ & $\mathbf{0.3914}$ & $\mathbf{0.3891}$ & --- & --- \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \paragraph{2. Interpretación del desglose por clase y comparación de esquemas de balanceo.}
@@ -533,10 +542,11 @@ La Tabla 7 presenta las métricas del mejor modelo MLP (\code{hidden=(128,64)}, 
 \begin{table}[H]
 \centering
 \caption{Evaluación integral del mejor modelo MLP en \code{train}, \code{validation} y \code{test}, frente al clasificador trivial (fuente: \code{evaluacion\_splits.csv} y \code{mejor\_modelo.json}).}
-\small
-\begin{tabular}{lrrrrrr}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X rrrrrr}
 \toprule
-\textbf{Partición / Modelo} & \textbf{Filas} & \textbf{Accuracy} & \textbf{Balanced Acc.} & \textbf{F1-Macro} & \textbf{F1-Weighted} & \textbf{ROC-AUC OvR} \\
+\textbf{Partición / Modelo} & \textbf{Filas} & \textbf{Accuracy} & \textbf{Bal. Acc.} & \textbf{F1-Macro} & \textbf{F1-Weighted} & \textbf{ROC-AUC} \\
 \midrule
 \code{train} (70\%) & $43{,}389$ & $0.3957$ & $0.3532$ & $0.3435$ & $0.3935$ & $0.6946$ \\
 \code{validation} (15\%) & $9{,}298$ & $0.3885$ & $0.3442$ & $0.3340$ & $0.3865$ & $0.6865$ \\
@@ -546,9 +556,9 @@ La Tabla 7 presenta las métricas del mejor modelo MLP (\code{hidden=(128,64)}, 
 \code{test\_dummy\_most\_frequent} & $9{,}298$ & $0.3918$ & $0.2000$ & $0.1126$ & $0.2206$ & $0.5000$ \\
 \code{test\_dummy\_stratified} & $9{,}298$ & $0.2810$ & $0.2030$ & $0.2030$ & $0.2809$ & $0.5015$ \\
 \midrule
-\textbf{Brecha de generalización (\code{Train} $-$ \code{Test})} & --- & $\mathbf{+0.0043}$ & $\mathbf{+0.0029}$ & $\mathbf{+0.0052}$ & $\mathbf{+0.0044}$ & $\mathbf{+0.0045}$ \\
+\textbf{Brecha (\code{Train} $-$ \code{Test})} & --- & $\mathbf{+0.0043}$ & $\mathbf{+0.0029}$ & $\mathbf{+0.0052}$ & $\mathbf{+0.0044}$ & $\mathbf{+0.0045}$ \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 La brecha de generalización entre entrenamiento y prueba es de apenas $\mathbf{0.0052}$ en \code{F1-Macro} ($0.3435$ vs.\ $0.3383$) y $\mathbf{0.0045}$ en \code{ROC-AUC OvR} ($0.6946$ vs.\ $0.6901$). Esta diferencia menor a medio punto porcentual —lograda gracias a la combinación de regularización $L_2$ ($\alpha = 0.001$), parada temprana en la época $29$ y momento de Nesterov— demuestra que \textbf{el modelo no presenta sobreajuste} y triplica el \code{F1-Macro} del clasificador por clase mayoritaria ($0.3383$ frente a $0.1126$, o $0.3457$ al aplicar los multiplicadores de decisión $[0.9, 1.3, 1.2, 1.0, 1.2]$ calibrados exclusivamente en \code{validation.csv}).
@@ -559,19 +569,20 @@ La variación estadística del mejor modelo se cuantificó mediante dos mecanism
 \begin{table}[H]
 \centering
 \caption{Variación estadística del mejor modelo MLP en validación cruzada ($k=5$) y en prueba mediante Bootstrap ($B=1{,}000$ réplicas, fuentes: \code{variacion\_estadistica\_mejor\_modelo.csv} y \code{variacion\_estadistica\_test\_bootstrap.csv}).}
-\small
-\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X rrrrrrrr}
 \toprule
 & \multicolumn{4}{c}{\textbf{Validación Cruzada ($k=5$ folds en Train)}} & \multicolumn{4}{c}{\textbf{Bootstrap en Test ($B=1{,}000$, $n=9{,}298$)}} \\
 \cmidrule(lr){2-5} \cmidrule(lr){6-9}
 \textbf{Métrica} & \textbf{Media} & \textbf{DE} & \textbf{SE} & \textbf{IC 95\% ($t_4$)} & \textbf{Puntual} & \textbf{DE (SE)} & \textbf{IC 95\% Inf.} & \textbf{IC 95\% Sup.} \\
 \midrule
 \code{F1-Macro}          & $0.3349$ & $0.0029$ & $0.0013$ & $[0.3313, 0.3385]$ & $0.3383$ & $0.0055$ & $0.3279$ & $0.3494$ \\
-\code{Balanced Accuracy} & $0.3391$ & $0.0026$ & $0.0012$ & $[0.3359, 0.3423]$ & $0.3503$ & $0.0059$ & $0.3395$ & $0.3619$ \\
+\code{Balanced Acc.}     & $0.3391$ & $0.0026$ & $0.0012$ & $[0.3359, 0.3423]$ & $0.3503$ & $0.0059$ & $0.3395$ & $0.3619$ \\
 \code{Accuracy}          & $0.3899$ & $0.0006$ & $0.0003$ & $[0.3891, 0.3906]$ & $0.3914$ & $0.0049$ & $0.3822$ & $0.4014$ \\
 \code{ROC-AUC OvR}       & $0.6863$ & $0.0053$ & $0.0024$ & $[0.6797, 0.6930]$ & $0.6901$ & $0.0036$ & $0.6830$ & $0.6971$ \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 El coeficiente de variación en validación cruzada es inferior al $0.87\%$ en todas las métricas ($\text{CV}_{\text{F1}} = 0.86\%$, $\text{CV}_{\text{AUC}} = 0.78\%$), y los intervalos de confianza al $95\%$ en prueba tienen una semi-amplitud de apenas $\pm 0.0107$ en \code{F1-Macro} y $\pm 0.0070$ en \code{ROC-AUC OvR}, confirmando alta estabilidad muestral.
@@ -582,25 +593,26 @@ Para verificar que el desempeño observado ($\text{ROC-AUC} \approx 0.69\text{--
 \begin{table}[H]
 \centering
 \caption{Comparación entre familias de modelos en \code{test.csv} y curva de tamaño de muestra (fuentes: \code{modelos\_referencia.csv} y \code{curva\_tamano\_muestra.csv}).}
-\small
-\begin{tabular}{lrrrrr}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X rrrrr}
 \toprule
-\textbf{Familia de Modelo / Tamaño de Entrenamiento} & \textbf{Accuracy} & \textbf{Balanced Acc.} & \textbf{F1-Macro} & \textbf{F1-Weighted} & \textbf{ROC-AUC OvR} \\
+\textbf{Familia de Modelo / Tamaño de Entrenamiento} & \textbf{Accuracy} & \textbf{Bal. Acc.} & \textbf{F1-Macro} & \textbf{F1-Weighted} & \textbf{ROC-AUC} \\
 \midrule
-\multicolumn{6}{l}{\textit{\textbf{A. Comparación de familias sobre la misma partición (\code{train} $= 43{,}389 \rightarrow$ \code{test} $= 9{,}298$):}}} \\
+\multicolumn{6}{l}{\textbf{A. Comparación de familias sobre la misma partición (\code{train} $= 43{,}389 \rightarrow$ \code{test} $= 9{,}298$):}} \\
 \code{DummyClassifier (most\_frequent)}            & $0.3918$ & $0.2000$ & $0.1126$ & $0.2206$ & $0.5000$ \\
 \code{LogisticRegression} ($\gamma=0.50$)          & $0.3902$ & $0.3519$ & $0.3396$ & $0.3887$ & $0.6887$ \\
 \textbf{\code{MLPClassifier} ganador ($\gamma=0.50$)} & $\mathbf{0.3914}$ & $\mathbf{0.3503}$ & $\mathbf{0.3383}$ & $\mathbf{0.3891}$ & $\mathbf{0.6901}$ \\
 \code{HistGradientBoostingClassifier} ($\gamma=0.50$) & $0.3859$ & $0.3490$ & $0.3390$ & $0.3855$ & $0.6960$ \\
 \midrule
-\multicolumn{6}{l}{\textit{\textbf{B. Curva de tamaño de muestra con MLP sobre la población limpia (evaluada en \code{test} $= 9{,}298$):}}} \\
+\multicolumn{6}{l}{\textbf{B. Curva de tamaño de muestra con MLP sobre la población limpia (evaluada en \code{test} $= 9{,}298$):}} \\
 $n_{\text{train}} = 10{,}000$ registros            & $0.3919$ & $0.3247$ & $0.3193$ & $0.3802$ & $0.6820$ \\
 $n_{\text{train}} = 25{,}000$ registros            & $0.3847$ & $0.3437$ & $0.3302$ & $0.3812$ & $0.6852$ \\
 $n_{\text{train}} = 43{,}389$ registros (Cochran)  & $0.3895$ & $0.3433$ & $0.3338$ & $0.3857$ & $0.6876$ \\
 $n_{\text{train}} = 100{,}000$ registros           & $0.3885$ & $0.3484$ & $0.3386$ & $0.3863$ & $0.6929$ \\
 $n_{\text{train}} = 300{,}000$ registros           & $0.3851$ & $0.3510$ & $0.3388$ & $0.3849$ & $0.6951$ \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 Los resultados de la Tabla 9 demuestran dos conclusiones contundentes:
@@ -614,7 +626,7 @@ Dado que la ponderación por clase ($\gamma^* = 0.50$) desplaza las probabilidad
 
 Finalmente, el módulo \code{src/evaluation\_large.py} evaluó por lotes de $50{,}000$ filas el archivo completo de $1{,}000{,}000$ de registros, aplicando la limpieza determinista \code{clean\_dataframe} a cada bloque y excluyendo los $43{,}389$ identificadores empleados en \code{train.csv}:
 \begin{equation}
-    1{,}000{,}000\text{ filas crudas} = 60{,}000\text{ eliminadas por limpieza} + 43{,}389\text{ excluidas de \code{train}} + \mathbf{896{,}611}\text{ \textbf{evaluadas fuera de muestra}}.
+    1{,}000{,}000\text{ crudas} = 60{,}000\text{ eliminadas} + 43{,}389\text{ en \code{train}} + \mathbf{896{,}611}\text{ \textbf{evaluadas}}.
 \end{equation}
 Sobre las $\mathbf{896{,}611}$ observaciones limpias no vistas durante el entrenamiento, el modelo procesó $\mathbf{40{,}321.3}$ \textbf{filas/segundo} ($22.24\text{ s}$ en total) y obtuvo $\text{\code{Accuracy}} = 0.3878$, $\text{\code{Balanced Accuracy}} = 0.3463$, $\text{\code{F1-Macro}} = 0.3348$, $\text{\code{F1-Weighted}} = 0.3858$ y $\text{\code{ROC-AUC OvR}} = 0.6881$, confirmando que las métricas estimadas en la muestra estratificada de prueba ($\text{F1-Macro} = 0.3383$, $\text{ROC-AUC} = 0.6901$) se sostienen sobre toda la población comercial.
 
@@ -653,7 +665,7 @@ Sobre las $\mathbf{896{,}611}$ observaciones limpias no vistas durante el entren
 \midrule
 \textbf{1. Limpieza determinista con rescate de registros:} Separación entre rescate de formato ($60{,}000$ filas recuperadas en moneda, categorías y gasto derivado) y eliminación por invalidez real ($60{,}000$ filas), conservando $940{,}000$ registros limpios. & \textbf{1. Incorporación de series temporales intra-anuales:} Disponer de agregaciones trimestrales o mensuales (30, 60 y 90 días previos al corte) permitiría capturar la tendencia de aceleración o enfriamiento de cada cliente antes del trimestre futuro. \\
 \addlinespace[4pt]
-\textbf{2. Cero fuga de información (\textit{Zero Data Leakage}):} Muestreo estratificado de Cochran ($61{,}985$ filas), transformación de dominio, escalado, codificación y ponderación $\gamma^* = 0.50$ encapsulados estrictamente dentro de cada fold de \code{train.csv}. & \textbf{2. Optimización bayesiana de hiperparámetros:} Sustituir la búsqueda exhaustiva en rejilla por optimización secuencial basada en modelos (\textit{Tree-structured Parzen Estimators} / Optuna) con poda temprana (\textit{Hyperband}) para explorar arquitecturas continuas en menor tiempo. \\
+\textbf{2. Cero fuga de información:} Muestreo estratificado de Cochran ($61{,}985$ filas), transformación de dominio, escalado, codificación y ponderación $\gamma^* = 0.50$ encapsulados estrictamente dentro de cada fold de \code{train.csv}. & \textbf{2. Optimización bayesiana de hiperparámetros:} Sustituir la búsqueda exhaustiva en rejilla por optimización secuencial basada en modelos (\textit{Tree-structured Parzen Estimators} / Optuna) con poda temprana (\textit{Hyperband}) para explorar arquitecturas continuas en menor tiempo. \\
 \addlinespace[4pt]
 \textbf{3. Exploración real del espacio MLP (472 combinaciones):} Evaluación paralela completa de arquitecturas de 1 a 3 capas, activaciones \code{relu}/\code{tanh}, regularización $L_2$ y optimizadores \code{adam} vs.\ \code{sgd} con \code{momentum} y Nesterov. & \textbf{3. Clasificación sensible a costos comerciales asimétricos:} Definir una matriz de utilidad monetaria por clase (p.\ ej., penalizar más la pérdida de un cliente \code{Alto\_valor} que una confusión entre \code{Ocasional} e \code{Inactivo}) para optimizar directamente el retorno esperado. \\
 \addlinespace[4pt]
@@ -667,7 +679,7 @@ Sobre las $\mathbf{896{,}611}$ observaciones limpias no vistas durante el entren
 % =============================================================================
 \section{Gráficas y Resultados Experimentales}
 
-En esta sección se presenta el catálogo completo de evidencias visuales generadas automáticamente a partir de los resultados experimentales (\code{graficas/01} a \code{11}), verificando gráficamente cada etapa del desarrollo.
+En esta sección se presenta el catálogo completo de evidencias visuales generadas automáticamente a partir de los resultados experimentales (\code{graficas 01} a \code{11}), verificando gráficamente cada etapa del desarrollo.
 
 \fig{01_distribucion_clases_cochran.png}{0.86}{Conservación exacta de las proporciones de las cinco clases entre la población limpia ($N=940{,}000$), la muestra de Cochran ($n=61{,}985$) y las particiones \code{train}, \code{validation} y \code{test}.}
 
